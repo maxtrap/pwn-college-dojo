@@ -1,3 +1,7 @@
+"""
+Module for interactions between pwn.college's Discord application (called Sensai) and the pwn.college api.
+"""
+
 import hmac
 from datetime import datetime, date
 
@@ -6,14 +10,26 @@ from flask_restx import Namespace, Resource
 from CTFd.models import db
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user
+from typing import Optional, Dict, Any
 
 from ...config import DISCORD_CLIENT_SECRET
 from ...models import DiscordUsers, DiscordUserActivity
 from ...utils.dojo import get_current_dojo_challenge
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 discord_namespace = Namespace("discord", description="Endpoint to manage discord")
 
-def auth_check(authorization):
+def auth_check(authorization: str):
+    """
+    FIXME Ensure that the authorization matches Sensai's discord token
+
+    Args:
+        authorization: The request's authorization header
+    """
     if not authorization or not authorization.startswith("Bearer "):
         return {"success": False, "error": "Unauthorized"}, 401
 
@@ -25,19 +41,35 @@ def auth_check(authorization):
 
 @discord_namespace.route("")
 class Discord(Resource):
+    """
+    Represents the /discord endpoint. Only supports DELETE method.
+    """
     @authed_only
     def delete(self):
+        """
+        Disconnects the discord account associated with the logged in user.
+        
+        In essence, it deletes the discord information of the currently logged in discord user from the database.
+        """
+        logger.info('A discord delete request has been made. UPDATED CODE HERE')
         user = get_current_user()
         discord_user = DiscordUsers.query.filter_by(user=user).first()
-        if discord_user:
+        logger.info(f'{discord_user=}')
+        if discord_user: 
             db.session.delete(discord_user)
             db.session.commit()
-        return {"success": True}
+        return {"success": True} # TODO It seems like it is returning successfully no matter if the discord user was found or not.
 
 
 @discord_namespace.route("/activity/<discord_id>")
 class DiscordActivity(Resource):
-    def get(self, discord_id):
+    def get(self, discord_id: int):
+        """
+        Gives information about the challenge which the user with the given discord_id is currently working on 
+
+        Args:
+            discord_id: The discord id of the user in question
+        """
         authorization = request.headers.get("Authorization")
         res, code = auth_check(authorization)
         if res:
@@ -51,7 +83,7 @@ class DiscordActivity(Resource):
         if not dojo_challenge:
             return {"success": True, "activity": None}
 
-        dojo_challenge = dojo_challenge.resolve()
+        dojo_challenge = dojo_challenge.resolve() # TODO What exactly does this even do?
         activity = {
             "challenge": {
                 "dojo": dojo_challenge.dojo.name,
@@ -64,19 +96,42 @@ class DiscordActivity(Resource):
         return {"success": True, "activity": activity}
 
 
-def get_user_activity_prop(discord_id, activity, start=None, end=None):
-    user = DiscordUsers.query.filter_by(discord_id=discord_id).first()
+def get_user_activity_prop(discord_id: int, activity: str, start: Optional[datetime] = None, end: Optional[datetime] = None) -> Dict[str, Any]:
+    """
+    Helper method for the number of `activity` that a discord user has in the time frame betweem `start` and `end`
+
+    Args:
+        discord_id: The discord user's discord_id
+        activity: The type of activity to be counted. Can be "thanks" or "memes". 
+        start: The start datetime object. Defaults to None.
+        end: The end datetime object. Defaults to None.
+
+    Returns:
+        A dictionary with "success": True and `activity`: number of `activity`
+    """
+    user: DiscordUsers = DiscordUsers.query.filter_by(discord_id=discord_id).first()
     if not user:
         count = 0
     elif activity == "thanks":
         count = (user.thanks(start, end)
-                 .group_by(DiscordUserActivity.message_id, DiscordUserActivity.source_user_id)
+                 .group_by(DiscordUserActivity.message_id, DiscordUserActivity.source_user_id) # TODO what is this for?
                  .count())
     elif activity == "memes":
         count = user.memes(start, end).count()
     return {"success": True, activity: count}
 
-def get_user_activity(discord_id, activity, request):
+def get_user_activity(discord_id: int, activity: str, request):
+    """
+    Get the number of `activity` that a discord user has based on the time frame specified in the request arguments
+
+    Args:
+        discord_id: The discord user's discord_id
+        activity: The type of activity to be counted. Can be "thanks" or "memes".
+        request: Flask's request object
+
+    Returns:
+        An invalid time format message if the time format is invalid, otherwise it returns the result of `get_user_activity_prop()`.
+    """
     authorization = request.headers.get("Authorization")
     res, code = auth_check(authorization)
     if res:
@@ -102,7 +157,19 @@ def get_user_activity(discord_id, activity, request):
 
     return get_user_activity_prop(discord_id, activity, start, end)
 
-def post_user_activity(discord_id, activity, request):
+def post_user_activity(discord_id: int, activity: str, request):
+    """
+    Helper method for storing discord activity into the database.
+
+    Args:
+        discord_id: The discord user's discord_id
+        activity: The type of activity to be counted. Can be "thanks" or "memes".
+        request: Flask's request object
+
+    Returns:
+        Error message if the JSON data is invalid or has missing parameters. Otherwise, it returns the number of of `activity`
+        that the user with `discord_id` has after being updated.
+    """
     authorization = request.headers.get("Authorization")
     res, code = auth_check(authorization)
     if res:
@@ -139,6 +206,9 @@ def post_user_activity(discord_id, activity, request):
 
 @discord_namespace.route("/memes/user/<discord_id>", methods=["GET", "POST"])
 class DiscordMemes(Resource):
+    """
+    API endpoint for getting and posting meme information
+    """
     def get(self, discord_id):
         return get_user_activity(discord_id, "memes", request)
 
@@ -147,6 +217,9 @@ class DiscordMemes(Resource):
 
 @discord_namespace.route("/thanks/user/<discord_id>", methods=["GET", "POST"])
 class DiscordThanks(Resource):
+    """
+    API endpoint for getting and posting thanks information
+    """
     def get(self, discord_id):
         return get_user_activity(discord_id, "thanks", request)
 
@@ -156,6 +229,9 @@ class DiscordThanks(Resource):
 
 @discord_namespace.route("/thanks/leaderboard", methods=["GET"])
 class GetDiscordLeaderBoard(Resource):
+    """
+    API endpoint for getting the thanks leaderboard
+    """
     def get(self):
         try:
             start = datetime.fromisoformat(request.args.get("start", f"{date.today().year}-01-01"))

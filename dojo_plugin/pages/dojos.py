@@ -9,12 +9,24 @@ from ..models import DojoChallenges, Dojos, DojoAdmins, DojoMembers
 from ..utils.dojo import generate_ssh_keypair
 from ..utils.stats import get_container_stats
 
-
 dojos = Blueprint("pwncollege_dojos", __name__)
 
 
 @dojos.route("/dojos")
 def listing(template="dojos.html"):
+    """
+    Route for displaying all of the available dojos to the user. This is what renders "/" (the front page) as well as "/dojos"
+
+    It calculates the following dojo information and passes it along to the template renderer:
+        - Pairs each dojo with the number of solves that the currently logged in user has on each dojo
+        - Groups each dojo based on the dojo's dojo.type. 
+        - Counts the number of people solving each dojo at the current moment
+    
+    The grouping determine where in the front page the dojos get placed. These are determined by the dojo.type:
+        - Type "welcome" gets placed under "Getting Started" (white belt material)
+        - Type "topic" gets placed under "Core Material"
+        - Type "public" gets placed under "Community Material"
+    """
     categorized_dojos = {
         "welcome": [],
         "topic": [],
@@ -51,10 +63,13 @@ def listing(template="dojos.html"):
     for dojo, solves in dojo_solves:
         if not (dojo.type == "hidden" or (dojo.type == "example" and dojo.official)):
             categorized_dojos.setdefault(dojo.type, []).append((dojo, solves))
+            # If a user joined or created a private dojo, this ensures that  shows up under "Dojos you've joined" even if it shows up elsewhere on the front page
+            # It also displays the solve count as 0 under "Dojos you've joined"
             categorized_dojos["member"].extend((dojo_member.dojo, 0) for dojo_member in user_dojo_members
                                                if dojo_member.dojo == dojo and dojo.type not in ["welcome", "topic", "public"])
         categorized_dojos["admin"].extend((dojo_admin.dojo, 0) for dojo_admin in user_dojo_admins if dojo_admin.dojo == dojo)
 
+    # Retrieves count for the number of containers 
     dojo_container_counts = collections.Counter(stats["dojo"] for stats in get_container_stats())
 
     return render_template(template, user=user, categorized_dojos=categorized_dojos, dojo_container_counts=dojo_container_counts)

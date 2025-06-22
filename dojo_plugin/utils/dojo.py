@@ -18,7 +18,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from CTFd.models import db, Challenges, Flags
 from CTFd.utils.user import get_current_user, is_admin
 
-from ..models import DojoAdmins, Dojos, DojoModules, DojoChallenges, DojoResources, DojoChallengeVisibilities, DojoResourceVisibilities, DojoModuleVisibilities
+from ..models import DojoAdmins, Dojos, DojoModules, DojoChallenges, DojoResources, DojoChallengeVisibilities, DojoResourceVisibilities, DojoModuleVisibilities, Users
 from ..config import DOJOS_DIR
 from ..utils import get_current_container
 
@@ -283,6 +283,9 @@ def dojo_initialize_files(data, dojo_dir):
 
 
 def dojo_from_dir(dojo_dir, *, dojo=None):
+    """
+    Creates a dojo from the specified directory. The directory must contain a dojo.yml.
+    """
     dojo_yml_path = dojo_dir / "dojo.yml"
     assert dojo_yml_path.exists(), "Missing file: `dojo.yml`"
 
@@ -296,6 +299,9 @@ def dojo_from_dir(dojo_dir, *, dojo=None):
 
 
 def dojo_from_spec(data, *, dojo_dir=None, dojo=None):
+    import logging
+    logger = logging.getLogger(__name__)
+
     try:
         dojo_data = DOJO_SPEC.validate(data)
     except SchemaError as e:
@@ -335,7 +341,7 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None):
     else:
         for name, value in dojo_kwargs.items():
             setattr(dojo, name, value)
-
+    
     existing_challenges = {(challenge.module.id, challenge.id): challenge.challenge for challenge in dojo.challenges}
     def challenge(module_id, challenge_id, transfer=None):
         if (module_id, challenge_id) in existing_challenges:
@@ -346,8 +352,10 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None):
             assert dojo.official or (is_admin() and not Dojos.from_id(dojo.id).first())
             old_dojo_id, old_module_id, old_challenge_id = transfer["dojo"], transfer["module"], transfer["challenge"]
             old_dojo = Dojos.from_id(old_dojo_id).first()
+            logger.info(old_dojo)
+            assert old_dojo, f"Transfer Error: unable to find source dojo in database for {old_dojo_id}:{old_module_id}:{old_challenge_id}"
             old_challenge = Challenges.query.filter_by(category=old_dojo.hex_dojo_id, name=f"{old_module_id}:{old_challenge_id}").first()
-            assert old_dojo and old_challenge, f"unable to find source dojo/module/challenge in database for {old_dojo_id}:{old_module_id}:{old_challenge_id}"
+            assert old_challenge, f"Transfer Error: unable to find source module/challenge in database for {old_dojo_id}:{old_module_id}:{old_challenge_id}"
             old_challenge.category = dojo.hex_dojo_id
             old_challenge.name = f"{module_id}:{challenge_id}"
             return old_challenge
@@ -479,7 +487,10 @@ def generate_ssh_keypair():
     return (public_key.read_text().strip(), private_key.read_text())
 
 
-def dojo_yml_dir(spec):
+def dojo_yml_dir(spec: str) -> tempfile.TemporaryDirectory:
+    """
+    Writes the spec into a file dojo.yml inside of a temporary directory as a means of creating a dojo without a github repository
+    """
     yml_dir = tempfile.TemporaryDirectory(dir=DOJOS_TMP_DIR)    # TODO: ignore_cleanup_errors=True
     yml_dir_path = pathlib.Path(yml_dir.name)
     with open(yml_dir_path / "dojo.yml", "w") as do:
@@ -488,6 +499,9 @@ def dojo_yml_dir(spec):
 
 
 def _assert_no_symlinks(dojo_dir):
+    """
+    Ensure that the given dojo_dir doesn't contain any symlinks that point outside of the dojo_dir
+    """
     if not isinstance(dojo_dir, pathlib.Path):
         dojo_dir = pathlib.Path(dojo_dir)
     for path in dojo_dir.rglob("*"):
@@ -495,8 +509,14 @@ def _assert_no_symlinks(dojo_dir):
 
 
 def dojo_clone(repository, private_key):
+    """
+    Clones the respository into DOJOS_TMP_DIR
+
+    `repository` must be of format "username/repository-name".
+    If the repository is public, it clones via https. If it is private, it uses the private_key to clone with ssh
+    """
     tmp_dojos_dir = DOJOS_TMP_DIR
-    tmp_dojos_dir.mkdir(exist_ok=True)
+    tmp_dojos_dir.mkdir(exist_ok=True) # Creates the DOJOS_TMP_DIR if it doesn't already exist
     clone_dir = tempfile.TemporaryDirectory(dir=tmp_dojos_dir)  # TODO: ignore_cleanup_errors=True
 
     key_file = tempfile.NamedTemporaryFile("w")
@@ -504,8 +524,11 @@ def dojo_clone(repository, private_key):
     key_file.flush()
 
     url = f"https://github.com/{repository}"
+
+    # If the github repository isn't public, the url is set so that cloning can be done over ssh
     if requests.head(url).status_code != 200:
         url = f"git@github.com:{repository}"
+
     subprocess.run(["git", "clone", "--depth=1", "--recurse-submodules", url, clone_dir.name],
                    env={
                        "GIT_SSH_COMMAND": f"ssh -i {key_file.name}",
@@ -536,7 +559,14 @@ def dojo_git_command(dojo, *args, repo_path=None):
                           capture_output=True)
 
 
-def dojo_create(user, repository, public_key, private_key, spec):
+def dojo_create(user: Users, repository: str, public_key: str, private_key: str , spec: str):
+    """
+    Attempts to create a dojo from the given github repository or specification string.
+
+    Either repository or spec must be provided for successful dojo creation.
+    If the provided repository is already used as a dojo, it will raise an AssertionError.
+    Only admins of the platform are able to create a dojo from spec. From spec is mainly used for testing
+    """
     try:
         if repository:
             repository_re = r"[\w\-]+/[\w\-]+"
@@ -554,7 +584,7 @@ def dojo_create(user, repository, public_key, private_key, spec):
             repository, public_key, private_key = None, None, None
 
         else:
-            raise AssertionError("Repository is required")
+            raise AssertionError("Repository or specification is required")
 
         dojo_path = pathlib.Path(dojo_dir.name)
 
@@ -614,7 +644,7 @@ def dojo_update(dojo):
     return dojo_from_dir(dojo.path, dojo=dojo)
 
 
-def dojo_accessible(id):
+def dojo_accessible(id: int) -> Dojos:
     if is_admin():
         return Dojos.from_id(id).first()
     return Dojos.viewable(id=id, user=get_current_user()).first()

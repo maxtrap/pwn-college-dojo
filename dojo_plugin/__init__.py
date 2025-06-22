@@ -1,3 +1,11 @@
+"""
+pwn.college plugin for the CTFd platform
+
+This module has all of the backend login for handling user interactions with the pwn.college platform.
+It is implemented as a plugin for the CTFd platform. CTFd is a standalone web app which has the functionality to track flag solves,
+leaderboards, and store everything in a database. pwn.college uses all of these features as a base, but modifies it heavily.
+"""
+
 import sys
 import os
 import datetime
@@ -6,11 +14,11 @@ from email.message import EmailMessage
 from email.utils import formatdate
 from urllib.parse import urlparse, urlunparse
 
-from flask import Response, request, redirect, current_app
+from flask import Flask, Response, request, redirect, current_app
 from flask.json import JSONEncoder
 from itsdangerous.exc import BadSignature
 from marshmallow_sqlalchemy import field_for
-from CTFd.models import db, Challenges, Users
+from CTFd.models import db, Users, Teams, Challenges, Flags
 from CTFd.utils.user import get_current_user
 from CTFd.plugins import register_admin_plugin_menu_bar
 from CTFd.plugins.challenges import CHALLENGE_CLASSES, BaseChallenge
@@ -37,22 +45,38 @@ from .api import api
 
 
 class DojoChallenge(BaseChallenge):
+    """
+    This class provides the baseline for how dojo's challenges are stored in the database.
+    """
+    
     id = "dojo"
     name = "dojo"
     challenge_model = Challenges
 
     @classmethod
-    def solve(cls, user, team, challenge, request):
+    def solve(cls, user: Users, team: Teams, challenge: Challenges, request):
+        """
+        This method is used to update the pwn.college backend with a challenge solve. This method is called whenever a user successfully solves a challenge.
+
+        Args:
+            user: The Users object associated with the user.
+            team: The teams feature is not currently used by pwn.college. This is here for compatibility with CTFd.
+            challenge: The Challenge object associated with the challenge that was solved.
+            request: Flask's request object.
+        """
         super().solve(user, team, challenge, request)
         update_awards(user)
         sync_canvas_user(user.id, challenge.id)
 
 
 class DojoFlag(BaseFlag):
+    """
+    This class is used by CTFd to validate flags submitted by users.
+    """
     name = "dojo"
 
     @staticmethod
-    def compare(chal_key_obj, provided):
+    def compare(chal_key_obj: Flags, provided: str) -> bool:
         current_account_id = get_current_user().account_id
         current_challenge_id = chal_key_obj.challenge_id
 
@@ -71,6 +95,9 @@ class DojoFlag(BaseFlag):
 
 
 def shell_context_processor():
+    """
+    TODO: What the fuck is this? CTFd.plugins.dojo_plugin.models isn't even a valid import.
+    """
     import CTFd.models as ctfd_models
     import CTFd.plugins.dojo_plugin.models as dojo_models
     result = dict()
@@ -95,6 +122,9 @@ CTFd.schemas.users.UserSchema.views["self"].append("hidden")
 
 
 def redirect_dojo():
+    """
+    TODO: I have no idea what this is for
+    """
     if "X-Forwarded-For" in request.headers:
         parsed_url = urlparse(request.url)
         if parsed_url.netloc.split(':')[0] != DOJO_HOST:
@@ -113,15 +143,22 @@ def redirect_dojo():
 
 
 def handle_authorization(default_handler):
+    """
+    TODO It seems like this is monkey patching authorization logic
+
+    If their authorization header value starts with ``Bearer`` the authorization logic is skipped - it is presumed they are already logged in.
+    I'm guessing this is to make browsing faster, though I'm not too sure.
+    """
     authorization = request.headers.get("Authorization")
     if authorization and authorization.startswith("Bearer "):
         return
     default_handler()
 
 
-def load(app):
+def load(app: Flask):
     db.create_all()
 
+    # Users can stay logged in for 180 days
     app.permanent_session_lifetime = datetime.timedelta(days=180)
 
     CHALLENGE_CLASSES["dojo"] = DojoChallenge

@@ -22,6 +22,11 @@ dojos_namespace = Namespace(
 @dojos_namespace.route("")
 class DojoList(Resource):
     def get(self):
+        """
+        Enpoint to retrieve all dojos that are viewable to the current user.
+
+        If there is no user logged in, it simply returns all publicly visible dojos 
+        """
         dojos = [
             dict(id=dojo.reference_id,
                  name=dojo.name,
@@ -36,8 +41,14 @@ class DojoList(Resource):
 class PruneAwards(Resource):
     @dojo_route
     @dojo_admins_only
-    def post(self, dojo):
-        all_completions = set(user for user,_ in dojo.completions())
+    def post(self, dojo: Dojos):
+        """
+        Removes awards from users who had solved all challenges in the dojo previously, but have not solved all the challenges currently in the dojo
+
+        This is useful if the dojo had changed significantly, and the dojo creator feels like people who had solved their dojo at an earlier stage of the dojo
+        should solve the new challenges to earn the award.
+        """
+        all_completions = set(user for user, _ in dojo.completions())
         num_pruned = 0
         for award in Emojis.query.where(Emojis.category==dojo.hex_dojo_id):
             if award.user not in all_completions:
@@ -46,11 +57,14 @@ class PruneAwards(Resource):
         db.session.commit()
         return {"success": True, "pruned_awards": num_pruned}
 
-@dojos_namespace.route("/<dojo>/promote")
+@dojos_namespace.route("/<dojo>/promote") # I think this should be renamed to /make-offical
 class PromoteDojo(Resource):
     @admins_only
     @dojo_route
     def post(self, dojo):
+        """
+        Makes the dojo an official dojo to appear
+        """
         dojo.official = True
         db.session.commit()
         return {"success": True}
@@ -60,13 +74,18 @@ class PromoteAdmin(Resource):
     @dojo_route
     @dojo_admins_only
     def post(self, dojo):
+        """
+        Endpoint for dojo admins to promote a user to be a dojo administrator. User must be a member of the dojo.
+
+        The user id must be passed in the request JSON with the key "user_id"
+        """
         data = request.get_json()
         if 'user_id' not in data:
             return {"success": False, "error": "User not specified."}, 400
         new_admin_id = data['user_id']
-        u = DojoUsers.query.filter_by(dojo=dojo, user_id=new_admin_id).first()
-        if u:
-            u.type = 'admin'
+        new_admin_user = DojoUsers.query.filter_by(dojo=dojo, user_id=new_admin_id).first()
+        if new_admin_user:
+            new_admin_user.type = 'admin'
         else:
             return {"success": False, "error": "User is not currently a dojo member."}, 400
         db.session.commit()
@@ -76,6 +95,11 @@ class PromoteAdmin(Resource):
 class CreateDojo(Resource):
     @authed_only
     def post(self):
+        """
+        Endpoint for users to create a dojo.
+
+        This endpoint caches the user's ip address to ensure that a person does not create more than 1 dojo per day.
+        """
         data = request.get_json()
         user = get_current_user()
 
@@ -103,6 +127,9 @@ class CreateDojo(Resource):
 class DojoModuleList(Resource):
     @dojo_route
     def get(self, dojo):
+        """
+        Endpoint for retrieving all information on modules in a dojo, along with all of the challenges in the module.
+        """
         modules = [
             dict(id=module.id,
                  name=module.name,
@@ -121,7 +148,12 @@ class DojoModuleList(Resource):
 class DojoSolveList(Resource):
     @authed_only
     @dojo_route
-    def get(self, dojo):
+    def get(self, dojo: Dojos):
+        """
+        Returns information about all the solves from the logging in user in the provided dojo.
+
+        In the response under "solves" it contains a list containing timestamp, module_id, and challenge_id of each solve sorted ascending by timestamp.
+        """
         user = get_current_user()
         solves_query = dojo.solves(user=user, ignore_visibility=True, ignore_admins=False)
 

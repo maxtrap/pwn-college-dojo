@@ -7,6 +7,12 @@ from . import force_cache_updates, get_all_containers, DojoChallenges
 
 @cache.memoize(timeout=1200, forced_update=force_cache_updates)
 def get_container_stats():
+    """
+    Returns a list of dictionaries that contain information about all of the currently running user challenge containers
+
+    Each dict in the list is of form {"dojo": dojo_id, "module": module_id, "challenge": challenge_id}.
+    It's mainly used for counting the number of users active on a given dojo, module or challenge
+    """ 
     containers = get_all_containers()
     return [{attr: container.labels[f"dojo.{attr}_id"]
             for attr in ["dojo", "module", "challenge"]}

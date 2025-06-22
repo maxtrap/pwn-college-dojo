@@ -23,10 +23,14 @@ from CTFd.utils.config.pages import build_markdown
 from CTFd.utils.security.sanitize import sanitize_html
 from sqlalchemy import String, Integer
 from sqlalchemy.sql import or_
+from typing import Optional, Union
+from docker import DockerClient
+from pathlib import Path
+
 
 from ..config import WORKSPACE_NODES
 from ..models import Dojos, DojoMembers, DojoAdmins, DojoChallenges, WorkspaceTokens
-from . import mac_docker
+from .mac_docker import MacDockerClient
 
 ID_REGEX = "^[A-Za-z0-9_.-]+$"
 def id_regex(s):
@@ -60,7 +64,13 @@ def get_current_container(user=None):
         return None
 
 
-def get_all_containers(dojo=None):
+def get_all_containers(dojo=None): # I think this should be renamed to get_all_challenge_containers() - Max
+    """
+    Get all the challenge containers that users are currently working in.
+
+    If dojo is None, it returns all containers from all dojos on the platform.
+    If dojo is specified, it returns all containers for that dojo.
+    """
     filters = dict(status="running", label="dojo.dojo_id")
     if dojo:
         filters["label"] = f"dojo.dojo_id={dojo.reference_id}"
@@ -85,9 +95,26 @@ def user_node(user):
     return list(WORKSPACE_NODES.keys())[user.id % len(WORKSPACE_NODES)] if WORKSPACE_NODES else None
 
 
-def user_docker_client(user, image_name=None):
+def user_docker_client(user: Users, image_name: Optional[str] = None) -> Union[DockerClient, MacDockerClient]:
+    """
+    Retrieves the docker client for communicating with the `user`'s docker image
+
+    FIXME If the dojo is configured in a multi-node arrangement, this function will return the docker client
+    associated with the docker container node within the {FIXME} to which the `user` belongs to. Each user is pseudo-randomly
+    assigned a node based on their user id.
+
+    If the dojo is configured in a single-node arrangment, it will simply return the main FIXME docker container client.
+
+    Args:
+        user: The user whose docker client to retrieve
+        image_name: FIXME The image name associated with the user, if it is known.
+        This is only checked if the server is being run on a Mac machine. Defaults to None.
+
+    Returns:
+        The docker client object.
+    """
     if image_name and image_name.startswith("mac:"):
-        return mac_docker.MacDockerClient()
+        return MacDockerClient()
 
     node_id = user_node(user)
     return (docker.DockerClient(base_url=f"tcp://192.168.42.{node_id + 1}:2375", tls=False)
@@ -95,6 +122,12 @@ def user_docker_client(user, image_name=None):
 
 
 def all_docker_clients():
+    """
+    Returns all docker clients that are configured for running the dojo.
+    
+    If the dojo is multi-node, it returns docker clients for all nodes.
+    Otherwise, it just returns a singleton list with the docker client for the main node.
+    """
     return [docker.DockerClient(base_url=f"tcp://192.168.42.{node_id + 1}:2375", tls=False)
             for node_id in WORKSPACE_NODES] if WORKSPACE_NODES else [docker.from_env()]
 
@@ -167,7 +200,15 @@ def unserialize_user_flag(user_flag, *, secret=None):
     return account_id, challenge_id
 
 
-def resolved_tar(dir, *, root_dir, filter=None):
+def resolved_tar(dir: Path, *, root_dir: Path, filter=None) -> io.BytesIO:
+    """
+    Packs a directory into an in-memory tar archive, resolving and validating symlinks to ensure they don’t point outside a trusted root directory.
+
+    Args:
+        dir: The directory to pack into an archive
+        root_dir: The security boundary. The function ensures symlinks don't point outside this directory.
+        filter: Optional filter function used to only keep files that match a specific criteria. Must take Path object as an argument. Defaults to None.
+    """
     tar_buffer = io.BytesIO()
     tar = tarfile.open(fileobj=tar_buffer, mode='w')
     resolved_root_dir = root_dir.resolve()

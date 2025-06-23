@@ -17,6 +17,9 @@ BELT_REQUIREMENTS = {
 }
 
 def get_user_emojis(user):
+    """
+    Return the list of all emojis that a user has earned or should earn based on all completed dojos
+    """
     emojis = [ ]
     for dojo in Dojos.query.all():
         emoji = dojo.award and dojo.award.get('emoji', None)
@@ -27,6 +30,37 @@ def get_user_emojis(user):
     return emojis
 
 def get_belts():
+    """
+    Returns a dictionary containing belt information.
+
+    The structure is like this (the numbers 42, 39, etc represent user ids):
+
+    {
+        dates: {
+            orange: {
+                42: 1970-01-01T00:00:00Z,
+                ...
+            }
+            yellow: {
+                39: 1970-01-01T00:00:00Z,
+                ...
+            }
+        }
+        users: {
+            42: {
+                handle: herobrine,
+                site: example.com,
+                color: blue,
+                date: 1970-01-01T00:00:00Z 
+            }
+            ...
+        }
+        ranks: {
+            orange: [42, 39, ...],
+            yellow: [39, 2, ...]
+        }
+    }
+    """
     result = dict(dates={}, users={}, ranks={})
     for color in reversed(BELT_ORDER):
         result["dates"][color] = {}
@@ -60,6 +94,13 @@ def get_belts():
     return result
 
 def get_viewable_emojis(user):
+    """
+    Returns dictionary containing all awards that are viewable to a user.
+
+    If a different user hides their profile or finishes a private dojo, those awards are not viewable to the given user and thus are not included.
+    The dictionary maps each user to a list of all of the awards they recieved.
+    Within the list, each award has information about the award description, emoji, count (always set to 1), and dojo url corresponding to the award
+    """
     result = { }
     viewable_dojo_urls = {
         dojo.hex_dojo_id: url_for("pwncollege_dojo.listing", dojo=dojo.reference_id)
@@ -87,13 +128,21 @@ def get_viewable_emojis(user):
     return result
 
 def update_awards(user):
-    current_belts = [belt.name for belt in Belts.query.filter_by(user=user)]
+    """
+    Updates the user's belt and emoji awards
+
+    This function:
+        - Checks all of the belt requirements to see if the user has the requirements but is missing their belt, and grants the appropriate belt if it is missing
+        - It also updates the belt roles on discord
+        - Checks all of the user's emojis and grants emojis if they were earned and are missing
+    """
+    current_belts = [belt.name for belt in Belts.query.filter_by(user=user)] # Get all the belts that the user has already earned 
     for belt, dojo_id in BELT_REQUIREMENTS.items():
-        if belt in current_belts:
+        if belt in current_belts: # If they already earned the belt, no need to check for a new belt.
             continue
         dojo = Dojos.query.filter(Dojos.official, Dojos.id == dojo_id).first()
         if not (dojo and dojo.completed(user)):
-            break
+            break # Break if any of the dojos are unsolved. This is key to ensure if a later dojo is solved, they don't earn the belt until they solve the earlier dojos
         db.session.add(Belts(user=user, name=belt))
         db.session.commit()
         current_belts.append(belt)
@@ -113,7 +162,7 @@ def update_awards(user):
         cache.delete_memoized(get_discord_member, discord_user.discord_id)
 
     current_emojis = get_user_emojis(user)
-    for emoji,dojo_name,dojo_id in current_emojis:
+    for emoji, dojo_name, dojo_id in current_emojis:
         # note: the category filter is critical, since SQL seems to be unable to query by emoji!
         emoji_award = Emojis.query.filter_by(user=user, name=emoji, category=dojo_id).first()
         if emoji_award:

@@ -1,3 +1,8 @@
+"""
+Endpoints to retrieve specific information about scores.
+
+This is for use in external API scripts
+"""
 from flask import request
 from flask_restx import Namespace, Resource
 from CTFd.cache import cache
@@ -12,6 +17,7 @@ score_namespace = Namespace("score")
 class ValidateUser(Resource):
     """
     /validate?username=user&email=user@test.com
+
     This endpoint is publicly available, no auth needed.
     Returns 1 or 0 depending on if username/email exists or not.
     """
@@ -28,6 +34,7 @@ class ValidateUser(Resource):
 class ScoreUser(Resource):
     """
     /score?username=user
+
     This endpoint is publicly available with no auth needed.
     Returns formatted data regarding a user's score.
     """

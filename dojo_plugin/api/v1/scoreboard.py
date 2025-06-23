@@ -26,6 +26,11 @@ SCOREBOARD_CACHE_TIMEOUT_SECONDS = 60 * 60 * 2 # two hours make to cache all sco
 scoreboard_namespace = Namespace("scoreboard")
 
 def email_symbol_asset(email):
+    """
+    Determines the hacker photo to use based on their email.
+
+    asu.edu email addresses show up as a fork.png, other .edu emails get the student.png image, and everyone else gets hacker.png
+    """
     if email.endswith("@asu.edu"):
         group = "fork.png"
     elif ".edu" in email.split("@")[1]:
@@ -35,10 +40,15 @@ def email_symbol_asset(email):
     return url_for("views.themes", path=f"img/dojo/{group}")
 
 @cache.memoize(timeout=SCOREBOARD_CACHE_TIMEOUT_SECONDS)
-def get_scoreboard_for(model, duration):
+def get_scoreboard_for(model, days: float):
+    """
+    Gets the scoreboard from the given model by retrieveing all the solves and sorting descending with the most solves first.
+
+    Days is a float that specifies how many days back to retrieve from 
+    """
     duration_filter = (
-        Solves.date >= datetime.datetime.utcnow() - datetime.timedelta(days=duration)
-        if duration else True
+        Solves.date >= datetime.datetime.utcnow() - datetime.timedelta(days=days)
+        if days else True
     )
     solves = db.func.count().label("solves")
     rank = (
@@ -92,6 +102,11 @@ def hook_object_update(mapper, connection, target):
         invalidate_scoreboard_cache()
 
 def get_scoreboard_page(model, duration=None, page=1, per_page=20):
+    """
+    Get the scoreboard for the given page.
+
+    Returns dictionary, where standings attribute maps to a list containing all the scoreboard information necessary to display each user on that page
+    """
     belt_data = get_belts()
     results = get_scoreboard_for(model, duration)
 
@@ -102,11 +117,14 @@ def get_scoreboard_page(model, duration=None, page=1, per_page=20):
     emojis = get_viewable_emojis(user)
 
     def standing(item):
+        """
+        Adds the hacker profile url, the icon url, the belt image url & color, and the list of badges to the provided scoreboard item
+        """
         if not item:
             return
         user_id = item["user_id"]
-        belt_color = belt_data["users"].get(user_id, {"color": "white"})["color"]
-        result = {key: item[key] for key in item.keys()}
+        belt_color = belt_data["users"].get(user_id, {"color": "white"})["color"] # Get belt color to display on the scoreboard
+        result = dict(item) # Create shallow copy of item
         result.update({
             "url": url_for("pwncollege_users.view_other", user_id=user_id),
             "symbol": email_symbol_asset(result.pop("email")),

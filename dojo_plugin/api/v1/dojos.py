@@ -178,6 +178,11 @@ class DojoSolveList(Resource):
 class DojoCourse(Resource):
     @dojo_route
     def get(self, dojo):
+        """
+        Retrieves the course syllabus, grade_code and student information.
+
+        FIXME this code breaks when dojo.course is none.
+        """
         result = dict(syllabus=dojo.course.get("syllabus", ""), grade_code=dojo.course.get("grade_code", ""))
         student = DojoStudents.query.filter_by(dojo=dojo, user=get_current_user()).first()
         if student:
@@ -190,6 +195,9 @@ class DojoCourseStudentList(Resource):
     @dojo_route
     @dojo_admins_only
     def get(self, dojo):
+        """
+        Gets the list of students in the dojo course. This method is only for dojo administrators.
+        """
         students = dojo.course.get("students", {})
         return {"success": True, "students": students}
 
@@ -199,6 +207,11 @@ class DojoCourseSolveList(Resource):
     @dojo_route
     @dojo_admins_only
     def get(self, dojo):
+        """
+        Retrieves list of solves. Contains the solve date, student token, module id and challenge id.
+
+        Filters to make sure only students that have a token are included
+        """
         students = dojo.course.get("students", {})
 
         solves_query = dojo.solves(ignore_visibility=True, ignore_admins=False)
@@ -230,6 +243,11 @@ class DojoChallengeSolve(Resource):
     @authed_only
     @dojo_route
     def post(self, dojo, module, challenge_id):
+        """
+        Endpoint for processing a challenge submission.
+
+        It is effectivly the same thing as CTFd's /challenge/attempt endpoint, but this is the endpoint used in the dojo test scripts.
+        """
         user = get_current_user()
         dojo_challenge = (DojoChallenges.from_id(dojo.reference_id, module.id, challenge_id)
                           .filter(DojoChallenges.visible()).first())
@@ -254,6 +272,15 @@ class DojoChallengeSolve(Resource):
 class DojoSurvey(Resource):
     @dojo_route
     def get(self, dojo, module, challenge_id):
+        """
+        Returns basic information about the survey that a challenge has.
+
+        The response contains information about the following:
+            - type
+            - prompt
+            - probability
+            - options 
+        """
         dojo_challenge = (DojoChallenges.from_id(dojo.reference_id, module.id, challenge_id)
                           .filter(DojoChallenges.visible()).first())
         if not dojo_challenge:
@@ -275,6 +302,9 @@ class DojoSurvey(Resource):
     @dojo_route
     @ratelimit(method="POST", limit=10, interval=60)
     def post(self, dojo, module, challenge_id):
+        """
+        Endpoint to validate and store user's survey submission into the database
+        """
         user = get_current_user()
         data = request.get_json()
         dojo_challenge = (DojoChallenges.from_id(dojo.reference_id, module.id, challenge_id)
@@ -317,6 +347,13 @@ class DojoChallengeDescription(Resource):
     @authed_only
     @dojo_route
     def get(self, dojo, module, challenge_id):
+        """
+        Retrieve the challenge description.
+
+        Authenticates to make sure the user has permission to see the challenge description.
+        This is used primarily for the progression locked challenges feature, where descrptions
+        need to be fetched dynamically as users solve challenges.
+        """ 
         user = get_current_user()
 
         dojo_challenge = next((c for c in module.visible_challenges() if c.id == challenge_id), None)

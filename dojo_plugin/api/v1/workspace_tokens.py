@@ -1,3 +1,9 @@
+"""
+Max's Comment: I can't seem to figure out what purpose this file serves. I don't see where tokens
+endpoints in this file are called (only the ctfd endpoints are called), and some of the code seems broken.
+
+Also the Namespace description isn't helpful
+"""
 from flask import request
 from flask_restx import Namespace, Resource
 from CTFd.models import ma
@@ -26,6 +32,9 @@ class TokenList(Resource):
     @authed_only
     @workspace_tokens_namespace.doc(description="Endpoint to list workspace tokens")
     def get(self):
+        """
+        Gets all workspace tokens associated with current user
+        """
         user = get_current_user()
         tokens = WorkspaceTokens.query.filter_by(user_id=user.id)
         schema = WorkspaceTokenSchema(only=["id", "expiration"], many=True)
@@ -37,6 +46,9 @@ class TokenList(Resource):
     @authed_only
     @workspace_tokens_namespace.doc(description="Endpoint to create a token object")
     def post(self):
+        """
+        Creates a token object and stores it in the database
+        """
         req = request.get_json()
         expiration = req.get("expiration")
         if expiration:

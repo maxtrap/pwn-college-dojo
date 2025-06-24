@@ -19,6 +19,9 @@ ssh_key_namespace = Namespace(
 class UpdateKey(Resource):
     @authed_only
     def post(self):
+        """
+        Adds key to the database, ensuring that the key is valid format and that it is not already in use
+        """
         data = request.get_json()
         key_value = data.get("ssh_key", "")
 
@@ -52,6 +55,9 @@ class UpdateKey(Resource):
 
     @authed_only
     def delete(self):
+        """
+        Deletes the key specified in "ssh_key" value in the json body
+        """
         data = request.get_json()
         key_value = data.get("ssh_key", "")
 

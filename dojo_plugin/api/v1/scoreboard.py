@@ -101,14 +101,14 @@ def hook_object_update(mapper, connection, target):
     if Session.object_session(target).is_modified(target, include_collections=False):
         invalidate_scoreboard_cache()
 
-def get_scoreboard_page(model, duration=None, page=1, per_page=20):
+def get_scoreboard_page(model, days=None, page=1, per_page=20):
     """
     Get the scoreboard for the given page.
 
     Returns dictionary, where standings attribute maps to a list containing all the scoreboard information necessary to display each user on that page
     """
     belt_data = get_belts()
-    results = get_scoreboard_for(model, duration)
+    results = get_scoreboard_for(model, days)
 
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
@@ -154,14 +154,20 @@ def get_scoreboard_page(model, duration=None, page=1, per_page=20):
     return result
 
 
-@scoreboard_namespace.route("/<dojo>/_/<int:duration>/<int:page>")
+@scoreboard_namespace.route("/<dojo>/_/<int:days>/<int:page>")
 class ScoreboardDojo(Resource):
     @dojo_route
-    def get(self, dojo, duration, page):
-        return get_scoreboard_page(dojo, duration=duration, page=page)
+    def get(self, dojo, days, page):
+        """
+        Get the scoreboard page for given dojo with scores from the last `days` days.
+        """
+        return get_scoreboard_page(dojo, days=days, page=page)
 
-@scoreboard_namespace.route("/<dojo>/<module>/<int:duration>/<int:page>")
+@scoreboard_namespace.route("/<dojo>/<module>/<int:days>/<int:page>")
 class ScoreboardModule(Resource):
     @dojo_route
-    def get(self, dojo, module, duration, page):
-        return get_scoreboard_page(module, duration=duration, page=page)
+    def get(self, dojo, module, days, page):
+        """
+        Get the scoreboard page for given module with scores from the last `days` days.
+        """
+        return get_scoreboard_page(module, days=days, page=page)

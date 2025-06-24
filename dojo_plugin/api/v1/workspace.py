@@ -16,9 +16,14 @@ workspace_namespace = Namespace(
 
 
 @workspace_namespace.route("")
-class view_desktop(Resource):
+class ViewDesktop(Resource):
     @authed_only
     def get(self):
+        """
+        Starts the service defined in the arguments for given user.
+
+        If the service request is desktop, it returns url with vnc parameters
+        """
         user_id = request.args.get("user")
         password = request.args.get("password")
         service = request.args.get("service")
@@ -42,10 +47,10 @@ class view_desktop(Resource):
                 if not hmac.compare_digest(password, interact_password) and not hmac.compare_digest(password, view_password):
                     abort(403)
                 password = password[:8]
-            else:
+            else: # Admins of the platform don't need password to enter container
                 password = interact_password[:8]
 
-            view_only = user_id is not None
+            view_only = user_id is not None # Grant view_only access if viewing a different user's desktop.
             service_param = "~".join(("desktop", str(user.id), container_password(container, "desktop")))
 
             vnc_params = {
@@ -83,6 +88,9 @@ class view_desktop(Resource):
 class ResetHome(Resource):
     @authed_only
     def post(self):
+        """
+        Endpoint for resetting the home directory of the current user. A container must be running for it to work.
+        """
         user = get_current_user()
 
         if not get_current_container(user):

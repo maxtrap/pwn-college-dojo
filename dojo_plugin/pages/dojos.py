@@ -26,6 +26,10 @@ def listing(template="dojos.html"):
         - Type "welcome" gets placed under "Getting Started" (white belt material)
         - Type "topic" gets placed under "Core Material"
         - Type "public" gets placed under "Community Material"
+        - Type "course" gets placed under "The Courses"
+
+    Dojos in the "member" list get placed under "Dojos You've Joined". This is usually for private dojos or dojos that you joined as courses.
+    Dojos in the "admin" list are simply dojos of which the current user is an admin
     """
     categorized_dojos = {
         "welcome": [],
@@ -63,7 +67,7 @@ def listing(template="dojos.html"):
     for dojo, solves in dojo_solves:
         if not (dojo.type == "hidden" or (dojo.type == "example" and dojo.official)):
             categorized_dojos.setdefault(dojo.type, []).append((dojo, solves))
-            # If a user joined or created a private dojo, this ensures that  shows up under "Dojos you've joined" even if it shows up elsewhere on the front page
+            # If a user joined or created a private dojo, this ensures that shows up under "Dojos you've joined" even if it shows up elsewhere on the front page
             # It also displays the solve count as 0 under "Dojos you've joined"
             categorized_dojos["member"].extend((dojo_member.dojo, 0) for dojo_member in user_dojo_members
                                                if dojo_member.dojo == dojo and dojo.type not in ["welcome", "topic", "public"])

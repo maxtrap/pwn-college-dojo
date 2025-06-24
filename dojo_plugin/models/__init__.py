@@ -40,6 +40,9 @@ def delete_before_insert(column, null=[]):
 
 deferred_definitions = []
 def deferred_definition(func):
+    """
+    Some definitions need to be deffered because they rely on things that aren't fully defined
+    """
     deferred_definitions.append(
         lambda: setattr(func.__globals__[func.__qualname__.split(".")[0]],
                         func.__name__,
@@ -47,6 +50,13 @@ def deferred_definition(func):
 
 
 def columns_repr(column_names):
+    """
+    Function for making the __repr__ of database models.
+
+    It joins all of the provided column names and to give a string formatted like:
+
+        <Classname col1=Col1... col2=Col2... ...>
+    """
     def __repr__(self):
         description = " ".join(f"{name}={getattr(self, name)!r}" for name in column_names)
         return f"<{self.__class__.__name__} {description}>"
@@ -54,6 +64,37 @@ def columns_repr(column_names):
 
 
 class Dojos(db.Model):
+    """
+    Represents a Dojo in the system.
+
+    The Dojo model contains information for modules, challenges, users, and metadata such as 
+    repository information, public/private keys, and configuration data. It supports 
+    both official and user-created dojos, and manages relationships with users, 
+    members, admins, students, modules, challenges, and resources.
+
+    Attributes:
+        dojo_id (int): Primary key, unique identifier for the dojo. Randomly generated 32 bit number.
+        repository (str): The github respository from which the dojo is created from
+        public_key (str): Generated public key
+        private_key (str): Generated private key
+        update_code (str): Secret randomly generated code used to authenticate dojo updates
+        id (str): User-defined dojo ID.
+        name (str): Display name of the dojo.
+        description (str): Text description of the dojo.
+        official (bool): Flag indicating if this dojo is an official dojo.
+        password (str): Optional password protecting the dojo.
+        data (JSON): Miscellaneous metadata fields. The fields that get stored here are:
+            - type: The dojo type. This is what determines where on the website the dojo gets displayed.
+                Supported types are ["welcome", "topic", "public", "course", "example", "hidden"] 
+            - award: The award given for commpleting the dojo. It will be a dictionary that will either contain an emoji, or a belt along with its color
+            - course: The course associated with the dojo. FIXME I have yet to figure out how this is actually done
+            - pages: TODO
+            - priveleged: TODO
+            - importable: TODO
+            - comparator: TODO
+
+            
+    """
     __tablename__ = "dojos"
 
     dojo_id = db.Column(db.Integer, primary_key=True)

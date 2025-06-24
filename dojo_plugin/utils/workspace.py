@@ -6,6 +6,11 @@ from . import user_docker_client
 on_demand_services = { "code", "desktop"}
 
 def start_on_demand_service(user, service_name):
+    """
+    Runs the on demand service by executing the proper command inside the challenge container to start the service.
+
+    Options for service_name are "code" and "desktop"
+    """
     if service_name not in on_demand_services:
         return
     try:
@@ -21,6 +26,22 @@ def start_on_demand_service(user, service_name):
 
 
 def exec_run(cmd, *, shell=False, assert_success=True, workspace_user="root", user_id=None, container=None, **kwargs):
+    """
+    Runs the speficied command cmd in the user's challenge container
+
+    Args:
+        cmd: The command to run in the user container
+        shell: Whether or not to run the command inside a shell by prepending "/bin/sh -c" to the command. Defaults to False.
+        assert_success: Whether or not to throw an assertion failure if the command has a non-zero exit code. Defaults to True
+        workspace_user: The user within the container to run the command as. Defaults to "root".
+        user_id: The platform user id whose container the command should run in. Defaults to None,
+        container: The container to run the command in. If None, it gets the challenge container from the current user. Defaults to None
+        kwargs: the kwargs
+    
+    Returns:
+        The exit_code, output from the command
+
+    """
     # TODO: Cleanup this interface
     if workspace_user == "root":
         workspace_user = "0"
@@ -41,6 +62,9 @@ def exec_run(cmd, *, shell=False, assert_success=True, workspace_user="root", us
     return exit_code, output
 
 def reset_home(user_id):
+    """
+    Zips everything in the home directory, deletes everything in the home directory, then places the zip file into the home directory
+    """
     exec_run(f"/bin/tar cvzf /tmp/home-backup.tar.gz /home/hacker", user_id=user_id, shell=True, workspace_user="hacker")
     exec_run(f"find /home/hacker -mindepth 1 -delete", user_id=user_id, shell=True, workspace_user="root")
     exec_run(f"chown hacker:hacker /home/hacker", user_id=user_id, shell=True, workspace_user="root")

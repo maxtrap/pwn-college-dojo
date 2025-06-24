@@ -33,6 +33,20 @@ def view_workspace(service):
 @authed_only
 @bypass_csrf_protection
 def forward_workspace(service, service_path=""):
+    """
+    Determines the redirect url for the given service.
+
+    `service` must begin with a port or a name of one of the ports specified in port_names
+    
+    `service` argument is separated by "~":
+        - If no ~ is in `service`, the whole `service` argument is interpreted as the service name
+        - If one ~ is in `service`, the part before the ~ is intepreted as service name, the second part is interpeted as user_id
+            This is used if a user is working on a challenge, and an admin of that challenge's dojo wishes to peep into the user's workspace.
+            This returns a 403 if the user who made the request is not an admin of that dojo.
+        - If two ~ is in `service`, the part before the ~ is intepreted as service name, the second part is interpeted as user_id
+            Same as the one case, however the last part of the `service` is the password for accessing the user's environment.
+            Yeah its not the most secure ¯\\_(ツ)_/¯
+    """
     prefix = f"/workspace/{service}/"
     assert request.full_path.startswith(prefix)
     service_path = request.full_path[len(prefix):]

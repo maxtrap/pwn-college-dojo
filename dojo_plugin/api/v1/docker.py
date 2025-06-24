@@ -120,7 +120,7 @@ def start_container(docker_client: DockerClient, user: Users, as_user: Users, us
 
     hostname = get_hostname(dojo_challenge, practice)
 
-    auth_token = os.urandom(32).hex() # Random auth token for some reason
+    auth_token = os.urandom(32).hex() # Auth token which is used for password generation in container authentication
 
 
     # Extract PATH from challenge image, and append challenge and workspace bin paths. 

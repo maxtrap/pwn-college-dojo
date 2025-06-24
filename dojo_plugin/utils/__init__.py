@@ -46,12 +46,18 @@ def container_name(user):
 
 
 def container_password(container, *args):
+    """
+    Joins all of the args, and returns a sha256 of the args along with the container auth_token (random 32-bit value generated during container startup) 
+    """
     key = container.labels["dojo.auth_token"].encode()
     message = "-".join(args).encode()
     return hmac.HMAC(key, message, "sha256").hexdigest()
 
 
 def get_current_container(user=None):
+    """
+    Returns the currently running challenge container of the provided user, or the currently logged in user if user=None. Otherwise, None.
+    """
     user = user or get_current_user()
     if not user:
         return None
@@ -83,6 +89,12 @@ def get_all_containers(dojo=None): # I think this should be renamed to get_all_c
 
 
 def serialize_user_flag(account_id, challenge_id, *, secret=None):
+    """
+    Serializes the user flag based on the account_id and challenge_id using that app secret.
+    
+    Then it reverses the resulting data as a layer of obfuscation. Oops, you know too much.
+    Optionally, a secret key can be passed in to be used instead of the configured app secret key.
+    """
     if secret is None:
         secret = current_app.config["SECRET_KEY"]
     serializer = URLSafeSerializer(secret)
@@ -91,7 +103,25 @@ def serialize_user_flag(account_id, challenge_id, *, secret=None):
     return user_flag
 
 
+def unserialize_user_flag(user_flag, *, secret=None):
+    """
+    Reverse of the `serialize_user_flag` operation and returns the account_id and challenge_id based on the provided flag
+    """
+    if secret is None:
+        secret = current_app.config["SECRET_KEY"]
+    user_flag = re.sub(".+?{(.+)}", r"\1", user_flag)[::-1]
+    serializer = URLSafeSerializer(secret)
+    account_id, challenge_id = serializer.loads(user_flag)
+    return account_id, challenge_id
+
+
 def user_node(user):
+    """
+    Returns the node id of the workspace node associated with the given user. Returns None if the dojo is in single node configuration.
+
+    The node associated with the user is calculated by doing user.id % num of workspace nodes, which means that users
+    are roughly evenly distributed among the nodes.
+    """
     return list(WORKSPACE_NODES.keys())[user.id % len(WORKSPACE_NODES)] if WORKSPACE_NODES else None
 
 
@@ -132,11 +162,18 @@ def all_docker_clients():
             for node_id in WORKSPACE_NODES] if WORKSPACE_NODES else [docker.from_env()]
 
 
-def user_ipv4(user):
-    # Full Subnet: 10.0.0.0/8
-    #           NODE            SERVICE_ID
-    # 00001010  0000  00000000000000000000
-    # SERVICE_IDs 0-255 are reserved for core services
+def user_ipv4(user: Users) -> str:
+    """
+    Generates an ipv4 address for the user on the subnet 10.0.0.0/8
+
+    The full ip address bits are layed out as follows:
+              NODE       SERVICE_ID
+    00001010  0000  00000000000000000000
+
+    Four bits are for the NODE_ID, and is determined from `user_node`.
+    20 bits are for SERVICE_ID, and is determined as user.id + 256.
+    SERVICE_IDs 0-255 are reserved for core services
+    """
 
     node_id = user_node(user) or 0
     service_id = user.id + 256
@@ -151,6 +188,9 @@ def user_ipv4(user):
 
 
 def redirect_internal(redirect_uri, auth=None):
+    """
+    Triggers an nginx redirect to the specified uri
+    """
     response = Response()
     if auth:
         response.headers["X-Accel-Redirect"] = "@forward"
@@ -162,14 +202,21 @@ def redirect_internal(redirect_uri, auth=None):
 
 
 def redirect_user_socket(user, port, url_path):
+    """
+    Triggers an internal redirect to the proper service based on the user, port and path
+    """
     assert user is not None
     return redirect_internal(f"http://{user_ipv4(user)}:{port}/{url_path}")
 
 
 def render_markdown(s):
+    """
+    Safely returns html from a markup string. If an official dojo is being loaded, it does not clean the html.
+    """
     raw_html = build_markdown(s or "")
+    print(g.dojo, flush=True)
     if "dojo" in g and (g.dojo.official or g.dojo.privileged):
-        return Markup(raw_html)
+        return Markup(raw_html) # Official dojos are assumed to be safe 
 
     markdown_tags = [
         "h1", "h2", "h3", "h4", "h5", "h6",
@@ -189,15 +236,6 @@ def render_markdown(s):
     }
     clean_html = bleach.clean(raw_html, tags=markdown_tags, attributes=markdown_attrs)
     return Markup(clean_html)
-
-
-def unserialize_user_flag(user_flag, *, secret=None):
-    if secret is None:
-        secret = current_app.config["SECRET_KEY"]
-    user_flag = re.sub(".+?{(.+)}", r"\1", user_flag)[::-1]
-    serializer = URLSafeSerializer(secret)
-    account_id, challenge_id = serializer.loads(user_flag)
-    return account_id, challenge_id
 
 
 def resolved_tar(dir: Path, *, root_dir: Path, filter=None) -> io.BytesIO:
@@ -226,7 +264,10 @@ def resolved_tar(dir: Path, *, root_dir: Path, filter=None) -> io.BytesIO:
     return tar_buffer
 
 
-def is_dojo_admin(user, dojo):
+def is_dojo_admin(user: Users, dojo: Dojos) -> bool:
+    """
+    Returns True if the `user` is an admin of the `dojo`, False otherwise
+    """
     return user and dojo and dojo.is_admin(user)
 
 

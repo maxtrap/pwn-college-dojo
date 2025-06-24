@@ -1,7 +1,7 @@
 """
 Endpoints to retrieve specific information about scores.
 
-This is for use in external API scripts
+This is for use in external API scripts, primarily for https://www.wechall.net/
 """
 from flask import request
 from flask_restx import Namespace, Resource

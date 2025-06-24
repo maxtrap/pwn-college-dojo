@@ -9,7 +9,18 @@ from ...models import Dojos, DojoModules, DojoChallenges
 
 search_namespace = Namespace("search", description="Search across dojos, modules, and challenges")
 
-def highlight_snippet(text, query, context=40):
+def highlight_snippet(text: str, query: str, context: int = 40):
+    """
+    Adds html tag to text which adds bold/coloring around a snippet of text found by matching the query
+
+    Args:
+        text: The text to find the snippet in
+        query: The snippet to find in the text
+        context: The number of characters to keep on each side of the match.
+    
+    Returns:
+        The text modified with the inserted html tag if a match was found, otherwise None
+    """
     if not text:
         return None
 
@@ -33,6 +44,12 @@ def highlight_snippet(text, query, context=40):
 @search_namespace.route("")
 class Search(Resource):
     def get(self):
+        """
+        Searches the dojo for query provided in the q paramter
+
+        It searches all the names and descriptions of all dojos, modules and challenges,
+        and returns matches in that order along with some additional information about the match.
+        """
         query = request.args.get("q", "").strip()
 
         user = get_current_user()
@@ -60,7 +77,7 @@ class Search(Resource):
                         "id": dojo.reference_id,
                         "name": dojo.name,
                         "link": f"/{dojo.reference_id}",
-                        "match": highlight_snippet(dojo.description, query)
+                        "match": highlight_snippet(dojo.description, query) # Highlight the description match if and only if it doesn't also match the name.
                             if query.lower() in (dojo.description or "").lower()
                             and query.lower() not in dojo.name.lower()
                             else None

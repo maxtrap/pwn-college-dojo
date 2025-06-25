@@ -158,6 +158,9 @@ def handle_authorization(default_handler):
 def load(app: Flask):
     db.create_all()
 
+    from .utils.discord import get_bot_join_server_url
+    print(get_bot_join_server_url(), flush=True)
+
     # Users can stay logged in for 180 days
     app.permanent_session_lifetime = datetime.timedelta(days=180)
 

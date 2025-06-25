@@ -21,6 +21,9 @@ discord_oauth_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY
 @discord.route("/discord/connect")
 @authed_only
 def discord_connect():
+    """
+    Endpoint for connecting your discord account to pwn.college. Redirects to /discord/redirect defined below 
+    """
     if not DISCORD_CLIENT_ID:
         abort(501)
 
@@ -38,6 +41,11 @@ def discord_connect():
 @discord.route("/discord/redirect")
 @authed_only
 def discord_redirect():
+    """
+    Endpoint that discord redirects to after authenticating the discord app 
+
+    Updates the database with the user's discord id. Also adds appropriate belts and awards to their discord profile.
+    """
     if not DISCORD_CLIENT_ID:
         abort(501)
 

@@ -41,6 +41,9 @@ def guild_request(endpoint, method="GET", **kwargs):
 
 
 def get_bot_join_server_url():
+    """
+    Returns the discord oauth url for enabling discord bot to join a server, which can allow for discord integration.
+    """
     # "Server Members Intent" also required
     params = dict(client_id=DISCORD_CLIENT_ID, scope="bot", permissions=268437504, guild_id=DISCORD_GUILD_ID)
     url = requests.Request("GET", f"{OAUTH_ENDPOINT}/authorize", params=params).prepare().url
@@ -48,6 +51,9 @@ def get_bot_join_server_url():
 
 
 def discord_avatar_asset(discord_member):
+    """
+    Retuns the link to the avatar that is displayed on the user's discord settings tab
+    """
     if not discord_member:
         return url_for("views.themes", path="img/dojo/discord_logo.svg")
     discord_id = discord_member["user"]["id"]
@@ -56,6 +62,9 @@ def discord_avatar_asset(discord_member):
 
 
 def get_discord_id(auth_code):
+    """
+    Uses the temporary auth code recieved from an Oauth authentication to retrieve the discord user id snowflake associated with the code's user.
+    """
     data = {
         "client_id": DISCORD_CLIENT_ID,
         "client_secret": DISCORD_CLIENT_SECRET,

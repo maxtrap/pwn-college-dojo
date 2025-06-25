@@ -1,3 +1,6 @@
+"""
+Handles everything to do with dojo creation.
+"""
 import os
 import re
 import subprocess
@@ -11,10 +14,13 @@ import urllib.request
 
 import yaml
 import requests
+import typing
+from typing import Any
 from schema import Schema, Optional, Regex, Or, Use, SchemaError
 from flask import abort, g
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from pathlib import Path
 from CTFd.models import db, Challenges, Flags
 from CTFd.utils.user import get_current_user, is_admin
 
@@ -196,24 +202,44 @@ DOJO_SPEC = Schema({
         }
     )],
 })
+"""
+This is the validation Schema that parses the dojo.yaml file during dojo initialization.
+
+In order to create a valid dojo.yaml, it must conform to the schema defined here.
+"""
 
 
-def setdefault_name(entry):
-    if "import" in entry:
+def setdefault_name(data):
+    """
+    Maps the "name" key of the `data` dictionary to the dictionary value of "id" if it exists.
+
+    Replaces any occurence of "-" in the name with a space, and puts it in title case.
+    """
+    if "import" in data:
         return
-    if "name" in entry:
+    if "name" in data:
         return
-    if "id" not in entry:
+    if "id" not in data:
         return
-    entry["name"] = entry["id"].replace("-", " ").title()
+    data["name"] = data["id"].replace("-", " ").title()
 
 
-def setdefault_file(data, key, file_path):
+def setdefault_description(data, file_path):
+    """
+    Maps the "description" key of the `data` dictionary to the contents of the file with the given `file_path`.
+
+    It only does this if the `file_path` exists and if the description hasn't already been specified in the yaml.
+    """
     if file_path.exists():
         data.setdefault("description", file_path.read_text())
 
 
-def setdefault_subyaml(data, subyaml_path):
+def setdefault_subyaml(data: dict[str, Any], subyaml_path: Path):
+    """
+    Loads in the subyaml and inserts anything defined in the subyaml into data that isn't already defined in data.
+    
+    Overwrites fields of subyaml with the top-level data. This means that anything defined in the top-level yaml takes precendence.
+    """
     if not subyaml_path.exists():
         return data
 
@@ -221,10 +247,10 @@ def setdefault_subyaml(data, subyaml_path):
     subyaml_data = yaml.safe_load(subyaml_path.read_text())
     data.clear()
     data.update(subyaml_data)
-    data.update(topyaml_data)
+    data.update(topyaml_data) # This overwrites any subyaml data with the "topyaml" data
 
 
-def load_dojo_subyamls(data, dojo_dir):
+def load_dojo_subyamls(data: dict[str, Any], dojo_dir: Path) -> dict[str, Any]:
     """
     The dojo yaml gets augmented with additional yamls and markdown files found in the dojo repo structure.
 
@@ -240,7 +266,7 @@ def load_dojo_subyamls(data, dojo_dir):
     The higher-level details override the lower-level details.
     """
 
-    setdefault_file(data, "description", dojo_dir / "DESCRIPTION.md")
+    setdefault_description(data, dojo_dir / "DESCRIPTION.md")
 
     for module_data in data.get("modules", []):
         if "id" not in module_data:
@@ -248,7 +274,7 @@ def load_dojo_subyamls(data, dojo_dir):
 
         module_dir = dojo_dir / module_data["id"]
         setdefault_subyaml(module_data, module_dir / "module.yml")
-        setdefault_file(module_data, "description", module_dir / "DESCRIPTION.md")
+        setdefault_description(module_data, module_dir / "DESCRIPTION.md")
         setdefault_name(module_data)
 
         for challenge_data in module_data.get("challenges", []):
@@ -257,7 +283,7 @@ def load_dojo_subyamls(data, dojo_dir):
 
             challenge_dir = module_dir / challenge_data["id"]
             setdefault_subyaml(challenge_data, challenge_dir / "challenge.yml")
-            setdefault_file(challenge_data, "description", challenge_dir / "DESCRIPTION.md")
+            setdefault_description(challenge_data, challenge_dir / "DESCRIPTION.md")
             setdefault_name(challenge_data)
 
     return data
@@ -282,9 +308,9 @@ def dojo_initialize_files(data, dojo_dir):
                 o.write(dojo_file["content"])
 
 
-def dojo_from_dir(dojo_dir, *, dojo=None):
+def dojo_from_dir(dojo_dir: Path, *, dojo: typing.Optional[Dojos]=None) -> Dojos:
     """
-    Creates a dojo from the specified directory. The directory must contain a dojo.yml.
+    Creates a dojo from the specified directory, ensuring symlinks don't point outside the directory. The directory must contain a dojo.yml.
     """
     dojo_yml_path = dojo_dir / "dojo.yml"
     assert dojo_yml_path.exists(), "Missing file: `dojo.yml`"
@@ -298,7 +324,7 @@ def dojo_from_dir(dojo_dir, *, dojo=None):
     return dojo_from_spec(data, dojo_dir=dojo_dir, dojo=dojo)
 
 
-def dojo_from_spec(data, *, dojo_dir=None, dojo=None):
+def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
     import logging
     logger = logging.getLogger(__name__)
 

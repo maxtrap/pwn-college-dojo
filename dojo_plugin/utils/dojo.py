@@ -15,7 +15,7 @@ import urllib.request
 import yaml
 import requests
 import typing
-from typing import Any
+from typing import Any, Union
 from schema import Schema, Optional, Regex, Or, Use, SchemaError
 from flask import abort, g
 from sqlalchemy.exc import IntegrityError
@@ -211,9 +211,13 @@ In order to create a valid dojo.yaml, it must conform to the schema defined here
 
 def setdefault_name(data):
     """
-    Maps the "name" key of the `data` dictionary to the dictionary value of "id" if it exists.
+    Sets the "name" key in the given `data` dictionary based on the "id" key.
 
-    Replaces any occurence of "-" in the name with a space, and puts it in title case.
+    Does nothing any of the following:
+        - "import" or "name" is already present in the `data`
+        - "id" is not present in the `data`
+
+    Otherwise, sets "name" to the "id" value with hyphens replaced by spaces and title-cased.
     """
     if "import" in data:
         return
@@ -226,7 +230,7 @@ def setdefault_name(data):
 
 def setdefault_description(data, file_path):
     """
-    Maps the "description" key of the `data` dictionary to the contents of the file with the given `file_path`.
+    Sets the "description" key of the `data` dictionary to the contents of the file with the given `file_path`.
 
     It only does this if the `file_path` exists and if the description hasn't already been specified in the yaml.
     """
@@ -289,7 +293,17 @@ def load_dojo_subyamls(data: dict[str, Any], dojo_dir: Path) -> dict[str, Any]:
     return data
 
 
-def dojo_initialize_files(data, dojo_dir):
+def dojo_initialize_files(data: dict[str, Any], dojo_dir: Path):
+    """
+    Function to initialize the files specified by "files" in the yaml
+
+    The function implements the admin-only "files" functionality not available for regular dojo creators.
+    
+    It does different things depending on the "type" attribute of "files":
+        - If the type is "download": fetches the file from the "url" attribute and stores it in the "path".
+            It ensures that the file is more than 50 MiB. Otherwise, it errors, saying that the file is small enough to be put in the github repo directly.
+        - If the type is "text": creates the file the given "path" and writes everything in the "content" field into the file. This is mainly for testing purposes.
+    """
     for dojo_file in data.get("files", []):
         assert is_admin(), "yml-specified files support requires admin privileges"
         rel_path = dojo_dir / dojo_file["path"]
@@ -324,10 +338,7 @@ def dojo_from_dir(dojo_dir: Path, *, dojo: typing.Optional[Dojos]=None) -> Dojos
     return dojo_from_spec(data, dojo_dir=dojo_dir, dojo=dojo)
 
 
-def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
-    import logging
-    logger = logging.getLogger(__name__)
-
+def dojo_from_spec(data: dict[str, Any], *, dojo_dir:typing.Optional[Path]=None, dojo:typing.Optional[Dojos]=None) -> Dojos:
     try:
         dojo_data = DOJO_SPEC.validate(data)
     except SchemaError as e:
@@ -343,6 +354,9 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
                 assert_importable(c)
 
     def assert_import_one(query, error_message):
+        """
+        Since dojos are queried by id, this ensures that only one dojo matches the id, as well as making sure that dojo is importable.
+        """
         try:
             o = query.one()
             assert_importable(o)
@@ -369,16 +383,25 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
             setattr(dojo, name, value)
     
     existing_challenges = {(challenge.module.id, challenge.id): challenge.challenge for challenge in dojo.challenges}
-    def challenge(module_id, challenge_id, transfer=None):
-        if (module_id, challenge_id) in existing_challenges:
+    def challenge(module_id: str, challenge_id: str, transfer: typing.Optional[dict[str, Any]]) -> Challenges:
+        """
+        Retrieves or creates a dojo challenge object based on the given module and challenge identifiers.
+    
+        This function performs the following logic:
+          - If the challenge has already been retrieved (cached in `existing_challenges`), it is returned immediately.
+          - If a challenge matching the `module_id` and `challenge_id` exists in the database, it is returned.
+          - If a `transfer` is provided, the function attempts to locate the challenge in the source dojo, validate transfer permissions,
+            and return a modified version scoped to the current dojo.
+          - If no existing or transferrable challenge is found, a new challenge instance is created and returned (but not committed).
+        """
+        if (module_id, challenge_id) in existing_challenges: # Don't re-query for challenges that are already in the dojo 
             return existing_challenges[(module_id, challenge_id)]
         if chal := Challenges.query.filter_by(category=dojo.hex_dojo_id, name=f"{module_id}:{challenge_id}").first():
             return chal
         if transfer:
-            assert dojo.official or (is_admin() and not Dojos.from_id(dojo.id).first())
+            assert dojo.official or (is_admin() and not Dojos.from_id(dojo.id).first()), "Transfer Error: transfers can only be utilized by official dojos or by system admins during dojo creation"
             old_dojo_id, old_module_id, old_challenge_id = transfer["dojo"], transfer["module"], transfer["challenge"]
             old_dojo = Dojos.from_id(old_dojo_id).first()
-            logger.info(old_dojo)
             assert old_dojo, f"Transfer Error: unable to find source dojo in database for {old_dojo_id}:{old_module_id}:{old_challenge_id}"
             old_challenge = Challenges.query.filter_by(category=old_dojo.hex_dojo_id, name=f"{old_module_id}:{old_challenge_id}").first()
             assert old_challenge, f"Transfer Error: unable to find source module/challenge in database for {old_dojo_id}:{old_module_id}:{old_challenge_id}"
@@ -388,6 +411,13 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
         return Challenges(type="dojo", category=dojo.hex_dojo_id, name=f"{module_id}:{challenge_id}", flags=[Flags(type="dojo")])
 
     def visibility(cls, *args):
+        """
+        Constructs a visibility window from one or more argument dictionaries.
+
+        This method scans the provided dictionaries for a nested "visibility" key containing
+        optional "start" and "stop" datetime values. The latest non-`None` values found take priority and are used
+        to create a new instance of `cls` with UTC-normalized timestamps.
+        """ 
         start = None
         stop = None
         for arg in args:
@@ -400,6 +430,14 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
 
     _missing = object()
     def shadow(attr, *datas, default=_missing, default_dict=None):
+        """
+        Looks for `attr` in the given datas (in reverse order), returning the first found value.
+
+        If not found:
+          - Returns `default` if explicitly provided
+          - Returns `default_dict[attr]` if present
+          - Otherwise raises KeyError.
+        """
         for data in reversed(datas):
             if attr in data:
                 return data[attr]
@@ -409,38 +447,51 @@ def dojo_from_spec(data, *, dojo_dir=None, dojo=None) -> Dojos:
             return default_dict[attr]
         raise KeyError(f"Missing `{attr}` in `{datas}`")
 
-    def import_ids(attrs, *datas):
+    def import_ids(attrs: list[str], *datas) -> tuple:
+        """
+        Resolves the import sources by extracting the "import" attribute from the `datas` and extracting all of the attributes under `import` which are specified by `attr`
+        """
         datas_import = [data.get("import", {}) for data in datas]
-        return tuple(shadow(id, *datas_import) for id in attrs)
+        return tuple(shadow(attr, *datas_import) for attr in attrs)
+    
+    def build_dojo_challenges(module_data):
+        if "challenges" not in module_data:
+            return None
+        return [
+            DojoChallenges(
+                **{kwarg: challenge_data.get(kwarg) for kwarg in ["id", "name", "description"]},
+                image=shadow("image", dojo_data, module_data, challenge_data, default=None),
+                allow_privileged=shadow("allow_privileged", dojo_data, module_data, challenge_data, default_dict=DojoChallenges.data_defaults),
+                importable=shadow("importable", dojo_data, module_data, challenge_data, default_dict=DojoChallenges.data_defaults),
+                challenge=challenge(
+                    module_data.get("id"), challenge_data.get("id"), transfer=challenge_data.get("transfer", None)
+                ) if "import" not in challenge_data else None,
+                progression_locked=challenge_data.get("progression_locked"),
+                visibility=visibility(DojoChallengeVisibilities, dojo_data, module_data, challenge_data),
+                survey=shadow("survey", dojo_data, module_data, challenge_data, default=None),
+                default=(assert_import_one(DojoChallenges.from_id(*import_ids(["dojo", "module", "challenge"], dojo_data, module_data, challenge_data)),
+                                    f"Import challenge `{'/'.join(import_ids(['dojo', 'module', 'challenge'], dojo_data, module_data, challenge_data))}` does not exist")
+                         if "import" in challenge_data else None),
+            )
+            for challenge_data in module_data["challenges"]
+        ]
+    
+    def build_dojo_resources(module_data):
+        if "resources" not in module_data:
+            return None 
+        return [
+            DojoResources(
+                **{kwarg: resource_data.get(kwarg) for kwarg in ["name", "type", "content", "video", "playlist", "slides"]},
+                visibility=visibility(DojoResourceVisibilities, dojo_data, module_data, resource_data),
+            )
+            for resource_data in module_data["resources"]
+        ]
 
     dojo.modules = [
         DojoModules(
             **{kwarg: module_data.get(kwarg) for kwarg in ["id", "name", "description"]},
-            challenges=[
-                DojoChallenges(
-                    **{kwarg: challenge_data.get(kwarg) for kwarg in ["id", "name", "description"]},
-                    image=shadow("image", dojo_data, module_data, challenge_data, default=None),
-                    allow_privileged=shadow("allow_privileged", dojo_data, module_data, challenge_data, default_dict=DojoChallenges.data_defaults),
-                    importable=shadow("importable", dojo_data, module_data, challenge_data, default_dict=DojoChallenges.data_defaults),
-                    challenge=challenge(
-                        module_data.get("id"), challenge_data.get("id"), transfer=challenge_data.get("transfer", None)
-                    ) if "import" not in challenge_data else None,
-                    progression_locked=challenge_data.get("progression_locked"),
-                    visibility=visibility(DojoChallengeVisibilities, dojo_data, module_data, challenge_data),
-                    survey=shadow("survey", dojo_data, module_data, challenge_data, default=None),
-                    default=(assert_import_one(DojoChallenges.from_id(*import_ids(["dojo", "module", "challenge"], dojo_data, module_data, challenge_data)),
-                                        f"Import challenge `{'/'.join(import_ids(['dojo', 'module', 'challenge'], dojo_data, module_data, challenge_data))}` does not exist")
-                             if "import" in challenge_data else None),
-                )
-                for challenge_data in module_data["challenges"]
-            ] if "challenges" in module_data else None,
-            resources = [
-                DojoResources(
-                    **{kwarg: resource_data.get(kwarg) for kwarg in ["name", "type", "content", "video", "playlist", "slides"]},
-                    visibility=visibility(DojoResourceVisibilities, dojo_data, module_data, resource_data),
-                )
-                for resource_data in module_data["resources"]
-            ] if "resources" in module_data else None,
+            challenges=build_dojo_challenges(module_data),
+            resources = build_dojo_resources(module_data),
             default=(assert_import_one(DojoModules.from_id(*import_ids(["dojo", "module"], dojo_data, module_data)),
                                 f"Import module `{'/'.join(import_ids(['dojo', 'module'], dojo_data, module_data))}` does not exist")
                      if "import" in module_data else None),
@@ -637,9 +688,9 @@ def dojo_create(user: Users, repository: str, public_key: str, private_key: str 
     except AssertionError as e:
         raise RuntimeError(str(e))
 
-    except Exception as e:
-        print(f"Encountered error: {e}", file=sys.stderr, flush=True)
-        raise RuntimeError("An error occurred while creating the dojo")
+    # except Exception as e:
+    #     print(f"Encountered error: {e}", file=sys.stderr, flush=True)
+    #     raise RuntimeError("An error occurred while creating the dojo")
 
     return dojo
 

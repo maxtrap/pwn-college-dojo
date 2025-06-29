@@ -214,7 +214,6 @@ def render_markdown(s):
     Safely returns html from a markup string. If an official dojo is being loaded, it does not clean the html.
     """
     raw_html = build_markdown(s or "")
-    print(g.dojo, flush=True)
     if "dojo" in g and (g.dojo.official or g.dojo.privileged):
         return Markup(raw_html) # Official dojos are assumed to be safe 
 

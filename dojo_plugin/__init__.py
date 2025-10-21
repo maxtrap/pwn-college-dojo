@@ -183,3 +183,6 @@ def load(app):
         bootstrap()
 
     app.shell_context_processor(shell_context_processor)
+
+def unused_funtion():
+    print('This code is never reached')

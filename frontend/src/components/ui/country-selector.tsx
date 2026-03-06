@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React, { useCallback, useState, forwardRef, useEffect } from "react"
+import React, { useCallback, useState, forwardRef, useEffect } from "react";
 import {
   Command,
   CommandEmpty,
@@ -8,36 +8,36 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { ChevronDown, CheckIcon } from "lucide-react"
-import { CircleFlag } from "react-circle-flags"
-import { countries } from "country-data-list"
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { ChevronDown, CheckIcon } from "lucide-react";
+import { CircleFlag } from "react-circle-flags";
+import { countries } from "country-data-list";
 
 export type Country = {
-  alpha2: string
-  alpha3: string
-  countryCallingCodes: string[]
-  currencies: string[]
-  emoji?: string
-  ioc: string
-  languages: string[]
-  name: string
-  status: string
-}
+  alpha2: string;
+  alpha3: string;
+  countryCallingCodes: string[];
+  currencies: string[];
+  emoji?: string;
+  ioc: string;
+  languages: string[];
+  name: string;
+  status: string;
+};
 
 type CountrySelectorProps = {
-  value?: string
-  onValueChange?: (value: string) => void
-  disabled?: boolean
-  placeholder?: string
-  className?: string
-}
+  value?: string;
+  onValueChange?: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
+};
 
 const CountrySelectorComponent = (
   {
@@ -48,41 +48,41 @@ const CountrySelectorComponent = (
     className,
     ...props
   }: CountrySelectorProps,
-  ref: React.ForwardedRef<HTMLButtonElement>
+  ref: React.ForwardedRef<HTMLButtonElement>,
 ) => {
-  const [open, setOpen] = useState(false)
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
+  const [open, setOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
 
   const options = countries.all.filter(
     (country: Country) =>
-      country.emoji && country.status !== "deleted" && country.ioc !== "PRK"
-  )
+      country.emoji && country.status !== "deleted" && country.ioc !== "PRK",
+  );
 
   useEffect(() => {
     if (!value) {
-      if (selectedCountry) setSelectedCountry(null)
-      return
+      if (selectedCountry) setSelectedCountry(null);
+      return;
     }
 
-    const country = options.find((c) => c.alpha2 === value)
+    const country = options.find((c) => c.alpha2 === value);
     if (country && country.alpha2 !== selectedCountry?.alpha2) {
-      setSelectedCountry(country)
+      setSelectedCountry(country);
     }
-  }, [value, options])
+  }, [value, options]);
 
   const handleSelect = useCallback(
     (country: Country) => {
-      setSelectedCountry(country)
-      onValueChange?.(country.alpha2)
-      setOpen(false)
+      setSelectedCountry(country);
+      onValueChange?.(country.alpha2);
+      setOpen(false);
     },
-    [onValueChange]
-  )
+    [onValueChange],
+  );
 
   const triggerClasses = cn(
     "flex h-11 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer hover:brightness-105 transition-all",
-    className
-  )
+    className,
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -105,9 +105,7 @@ const CountrySelectorComponent = (
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground">
-            {placeholder}
-          </span>
+          <span className="text-muted-foreground">{placeholder}</span>
         )}
 
         <ChevronDown size={16} className="text-muted-foreground" />
@@ -149,7 +147,7 @@ const CountrySelectorComponent = (
                         "ml-auto h-4 w-4 shrink-0",
                         selectedCountry?.name === option.name
                           ? "opacity-100"
-                          : "opacity-0"
+                          : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -159,9 +157,9 @@ const CountrySelectorComponent = (
         </Command>
       </PopoverContent>
     </Popover>
-  )
-}
+  );
+};
 
-CountrySelectorComponent.displayName = "CountrySelector"
+CountrySelectorComponent.displayName = "CountrySelector";
 
-export const CountrySelector = forwardRef(CountrySelectorComponent)
+export const CountrySelector = forwardRef(CountrySelectorComponent);

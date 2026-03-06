@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { Card } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Trophy } from 'lucide-react'
-import Link from 'next/link'
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Trophy } from "lucide-react";
+import Link from "next/link";
 
 interface DojoProgressItem {
-  id: string
-  name: string
-  totalChallenges: number
-  solvedChallenges: number
-  slug: string
+  id: string;
+  name: string;
+  totalChallenges: number;
+  solvedChallenges: number;
+  slug: string;
 }
 
 interface DojoProgressProps {
-  dojos: DojoProgressItem[]
+  dojos: DojoProgressItem[];
 }
 
 export function DojoProgress({ dojos }: DojoProgressProps) {
@@ -22,9 +22,11 @@ export function DojoProgress({ dojos }: DojoProgressProps) {
     return (
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Dojo Progress</h2>
-        <p className="text-sm text-muted-foreground">No dojo progress to display</p>
+        <p className="text-sm text-muted-foreground">
+          No dojo progress to display
+        </p>
       </Card>
-    )
+    );
   }
 
   return (
@@ -32,9 +34,10 @@ export function DojoProgress({ dojos }: DojoProgressProps) {
       <h2 className="text-lg font-semibold mb-4">Dojo Progress</h2>
       <div className="space-y-4">
         {dojos.map((dojo) => {
-          const progress = dojo.totalChallenges > 0
-            ? Math.round((dojo.solvedChallenges / dojo.totalChallenges) * 100)
-            : 0
+          const progress =
+            dojo.totalChallenges > 0
+              ? Math.round((dojo.solvedChallenges / dojo.totalChallenges) * 100)
+              : 0;
 
           return (
             <Link
@@ -56,9 +59,9 @@ export function DojoProgress({ dojos }: DojoProgressProps) {
                 {progress}% complete
               </p>
             </Link>
-          )
+          );
         })}
       </div>
     </Card>
-  )
+  );
 }

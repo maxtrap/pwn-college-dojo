@@ -1,16 +1,16 @@
-import { getAllThemes } from '@/themes'
-import { themeColorsToCSSVars } from '@/themes/registry'
+import { getAllThemes } from "@/themes";
+import { themeColorsToCSSVars } from "@/themes/registry";
 
 export function generateThemeScript(): string {
-  const themes = getAllThemes()
+  const themes = getAllThemes();
 
-  const themeData: Record<string, any> = {}
+  const themeData: Record<string, any> = {};
 
   for (const theme of themes) {
     themeData[theme.id] = {
       light: theme.light,
-      dark: theme.dark
-    }
+      dark: theme.dark,
+    };
   }
 
   return `
@@ -72,5 +72,5 @@ export function generateThemeScript(): string {
     }
   }
 })();
-`.trim()
+`.trim();
 }

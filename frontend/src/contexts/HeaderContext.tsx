@@ -1,32 +1,34 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface HeaderContextType {
-  isHeaderHidden: boolean
-  setHeaderHidden: (hidden: boolean) => void
-  headerHeight: number
+  isHeaderHidden: boolean;
+  setHeaderHidden: (hidden: boolean) => void;
+  headerHeight: number;
 }
 
-const HeaderContext = createContext<HeaderContextType | undefined>(undefined)
+const HeaderContext = createContext<HeaderContextType | undefined>(undefined);
 
 export function HeaderProvider({ children }: { children: React.ReactNode }) {
-  const [isHeaderHidden, setIsHeaderHidden] = useState(false)
-  const headerHeight = 64 // 4rem / 16px
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+  const headerHeight = 64; // 4rem / 16px
 
   const setHeaderHidden = (hidden: boolean) => {
-    setIsHeaderHidden(hidden)
-  }
+    setIsHeaderHidden(hidden);
+  };
 
   return (
-    <HeaderContext.Provider value={{ isHeaderHidden, setHeaderHidden, headerHeight }}>
+    <HeaderContext.Provider
+      value={{ isHeaderHidden, setHeaderHidden, headerHeight }}
+    >
       {children}
     </HeaderContext.Provider>
-  )
+  );
 }
 
 export function useHeader() {
-  const context = useContext(HeaderContext)
+  const context = useContext(HeaderContext);
   if (context === undefined) {
-    throw new Error('useHeader must be used within a HeaderProvider')
+    throw new Error("useHeader must be used within a HeaderProvider");
   }
-  return context
+  return context;
 }

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { ErrorPage } from '@/components/ui/error-page'
+import { useEffect } from "react";
+import { ErrorPage } from "@/components/ui/error-page";
 
 export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Global error:', error)
-  }, [error])
+    console.error("Global error:", error);
+  }, [error]);
 
   return (
     <html>
@@ -27,5 +27,5 @@ export default function GlobalError({
         />
       </body>
     </html>
-  )
+  );
 }

@@ -1,36 +1,38 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
-  className?: string
-  linkClassName?: string
-  textClassName?: string
-  showFullName?: boolean
+  className?: string;
+  linkClassName?: string;
+  textClassName?: string;
+  showFullName?: boolean;
 }
 
 export function Logo({
   className,
   linkClassName,
   textClassName,
-  showFullName = false
+  showFullName = false,
 }: LogoProps) {
   return (
     <Link
       href="/"
       className={cn(
         "flex items-center gap-2 group transition-all duration-200",
-        linkClassName
+        linkClassName,
       )}
     >
       {/* pwn.college logo with icon in the middle */}
       <div className={cn("flex items-center gap-1", className)}>
-        <span className={cn(
-          "text-xl font-bold tracking-tight text-foreground",
-          "group-hover:text-primary transition-colors duration-200",
-          "font-sans",
-          textClassName
-        )}>
+        <span
+          className={cn(
+            "text-xl font-bold tracking-tight text-foreground",
+            "group-hover:text-primary transition-colors duration-200",
+            "font-sans",
+            textClassName,
+          )}
+        >
           pwn
         </span>
 
@@ -43,30 +45,40 @@ export function Logo({
           className="flex-shrink-0 opacity-90 group-hover:opacity-100 transition-opacity mt-1.5"
         />
 
-        <span className={cn(
-          "text-xl font-bold tracking-tight text-foreground",
-          "group-hover:text-primary transition-colors duration-200",
-          "font-sans",
-          textClassName
-        )}>
+        <span
+          className={cn(
+            "text-xl font-bold tracking-tight text-foreground",
+            "group-hover:text-primary transition-colors duration-200",
+            "font-sans",
+            textClassName,
+          )}
+        >
           college
         </span>
 
         {showFullName && (
-          <span className={cn(
-            "ml-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider",
-            "group-hover:text-foreground transition-colors duration-200"
-          )}>
+          <span
+            className={cn(
+              "ml-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider",
+              "group-hover:text-foreground transition-colors duration-200",
+            )}
+          >
             DOJO
           </span>
         )}
       </div>
     </Link>
-  )
+  );
 }
 
 // Compact version for smaller spaces
-export function CompactLogo({ className, linkClassName }: { className?: string, linkClassName?: string }) {
+export function CompactLogo({
+  className,
+  linkClassName,
+}: {
+  className?: string;
+  linkClassName?: string;
+}) {
   return (
     <Logo
       className={className}
@@ -74,5 +86,5 @@ export function CompactLogo({ className, linkClassName }: { className?: string, 
       textClassName="text-lg"
       showFullName={false}
     />
-  )
+  );
 }

@@ -127,11 +127,12 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     resetWorkspace: () => set(defaultWorkspaceState),
 
     // Close workspace (clears active challenge/resource but keeps state)
-    closeWorkspace: () => set({
-      activeChallenge: null,
-      activeResource: null,
-      isMinimized: false,
-    }),
+    closeWorkspace: () =>
+      set({
+        activeChallenge: null,
+        activeResource: null,
+        isMinimized: false,
+      }),
   })),
 );
 

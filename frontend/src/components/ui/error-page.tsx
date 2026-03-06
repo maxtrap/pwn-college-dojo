@@ -70,38 +70,38 @@ export function ErrorPage({
 
         {/* Action Buttons */}
         {(showBack || showRefresh || showHome) && (
-              <div className="flex flex-col justify-center mt-8 sm:flex-row gap-3">
-                {showBack && (
-                  <Button
-                    variant="outline"
-                    onClick={handleBack}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Go Back
-                  </Button>
-                )}
+          <div className="flex flex-col justify-center mt-8 sm:flex-row gap-3">
+            {showBack && (
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Go Back
+              </Button>
+            )}
 
-                {showRefresh && (
-                  <Button
-                    variant="outline"
-                    onClick={handleRefresh}
-                    className="flex items-center gap-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Try Again
-                  </Button>
-                )}
+            {showRefresh && (
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
+            )}
 
-                {showHome && (
-                  <Button asChild className="flex items-center gap-2">
-                    <Link href="/">
-                      <Home className="h-4 w-4" />
-                      Go Home
-                    </Link>
-                  </Button>
-                )}
-              </div>
+            {showHome && (
+              <Button asChild className="flex items-center gap-2">
+                <Link href="/">
+                  <Home className="h-4 w-4" />
+                  Go Home
+                </Link>
+              </Button>
+            )}
+          </div>
         )}
       </motion.div>
     </div>

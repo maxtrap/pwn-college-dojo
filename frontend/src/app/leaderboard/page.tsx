@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { Trophy } from 'lucide-react'
+import { Trophy } from "lucide-react";
 
 export default function Leaderboard() {
   return (
@@ -8,8 +8,10 @@ export default function Leaderboard() {
       <div className="max-w-7xl mx-auto text-center py-16">
         <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
-        <p className="text-muted-foreground mb-4">This page is under development</p>
+        <p className="text-muted-foreground mb-4">
+          This page is under development
+        </p>
       </div>
     </div>
-  )
+  );
 }

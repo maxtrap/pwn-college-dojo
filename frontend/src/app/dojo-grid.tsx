@@ -1,9 +1,9 @@
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { BookOpen, Zap } from 'lucide-react'
-import { Belt } from '@/components/ui/belt'
-import { Dojo, SectionInfo } from './home-client'
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Zap } from "lucide-react";
+import { Belt } from "@/components/ui/belt";
+import { Dojo, SectionInfo } from "./home-client";
 
 const getDojoIcon = (dojo: any) => {
   // If dojo has an award with a belt, use the Belt component
@@ -14,37 +14,38 @@ const getDojoIcon = (dojo: any) => {
         alt={`${dojo.award.belt} belt`}
         className="h-6 w-auto max-w-[48px]"
       />
-    )
+    );
   }
 
   // If dojo has an award with an emoji, use the emoji
   if (dojo.award?.emoji) {
-    return <span className="text-3xl">{dojo.award.emoji}</span>
+    return <span className="text-3xl">{dojo.award.emoji}</span>;
   }
 
   // Fallback to name-based emojis
-  const name = dojo.name?.toLowerCase() || ''
-  if (name.includes('fundamentals')) return <span className="text-3xl">💻</span>
-  if (name.includes('linux')) return <span className="text-3xl">🐧</span>
-  if (name.includes('program')) return <span className="text-3xl">🔤</span>
-  if (name.includes('web')) return <span className="text-3xl">🌐</span>
-  if (name.includes('crypto')) return <span className="text-3xl">🔐</span>
-  if (name.includes('reverse')) return <span className="text-3xl">🔍</span>
-  if (name.includes('pwn')) return <span className="text-3xl">💥</span>
-  if (name.includes('forensics')) return <span className="text-3xl">🕵️</span>
-  return <span className="text-3xl">🎯</span>
-}
+  const name = dojo.name?.toLowerCase() || "";
+  if (name.includes("fundamentals"))
+    return <span className="text-3xl">💻</span>;
+  if (name.includes("linux")) return <span className="text-3xl">🐧</span>;
+  if (name.includes("program")) return <span className="text-3xl">🔤</span>;
+  if (name.includes("web")) return <span className="text-3xl">🌐</span>;
+  if (name.includes("crypto")) return <span className="text-3xl">🔐</span>;
+  if (name.includes("reverse")) return <span className="text-3xl">🔍</span>;
+  if (name.includes("pwn")) return <span className="text-3xl">💥</span>;
+  if (name.includes("forensics")) return <span className="text-3xl">🕵️</span>;
+  return <span className="text-3xl">🎯</span>;
+};
 
 const DojoCard = ({
   dojo,
   progress = null,
 }: {
-  dojo: any
-  progress?: number | null
+  dojo: any;
+  progress?: number | null;
 }) => {
   // Don't render if dojo.id is missing
   if (!dojo.id) {
-    return null
+    return null;
   }
 
   return (
@@ -69,7 +70,7 @@ const DojoCard = ({
                 {progress}%
               </Badge>
             )}
-          </div>{' '}
+          </div>{" "}
         </CardHeader>
 
         <CardContent className="pt-0">
@@ -94,19 +95,19 @@ const DojoCard = ({
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Modules</span>
               <span className="font-medium text-foreground">
-                {dojo.modules || '-'}
+                {dojo.modules || "-"}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Challenges</span>
               <span className="font-medium text-foreground">
-                {dojo.challenges || '-'}
+                {dojo.challenges || "-"}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Active Hackers</span>
               <span className="font-medium text-foreground">
-                {dojo.active_hackers || '-'}
+                {dojo.active_hackers || "-"}
               </span>
             </div>
           </div>
@@ -121,8 +122,8 @@ const DojoCard = ({
         </CardContent>
       </Card>
     </Link>
-  )
-}
+  );
+};
 
 const SectionHeader = ({
   icon,
@@ -130,10 +131,10 @@ const SectionHeader = ({
   subtitle,
   description,
 }: {
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  description: string
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  description: string;
 }) => (
   <div className="mb-12">
     <div className="flex items-center gap-3 mb-4">
@@ -143,12 +144,12 @@ const SectionHeader = ({
     <p className="text-xl font-medium text-muted-foreground mb-2">{subtitle}</p>
     <p className="text-muted-foreground leading-relaxed">{description}</p>
   </div>
-)
+);
 
 type DojoGridProps = {
-  dojos: Dojo[]
-  sectionInfo: SectionInfo
-}
+  dojos: Dojo[];
+  sectionInfo: SectionInfo;
+};
 
 const DojoGrid = ({ dojos, sectionInfo }: DojoGridProps) => (
   <div className="pt-16 sm:pt-20 pb-16 sm:pb-20">
@@ -171,7 +172,7 @@ const DojoGrid = ({ dojos, sectionInfo }: DojoGridProps) => (
       </div>
     )}
   </div>
-)
+);
 
 const NoDojosState = () => (
   <div className="py-16">
@@ -179,6 +180,6 @@ const NoDojosState = () => (
     <h3 className="text-xl font-semibold mb-2">No dojos available yet</h3>
     <p className="text-muted-foreground">Check back soon for new challenges!</p>
   </div>
-)
+);
 
-export { DojoGrid, NoDojosState }
+export { DojoGrid, NoDojosState };

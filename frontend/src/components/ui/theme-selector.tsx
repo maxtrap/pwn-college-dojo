@@ -1,5 +1,5 @@
-import { Check, ChevronDown, Palette, Sun, Moon, Monitor } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Check, ChevronDown, Palette, Sun, Moon, Monitor } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,46 +7,52 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useTheme } from '@/components/theme/ThemeProvider'
-import { getAllThemes } from '@/themes'
-import { useState, useEffect } from 'react'
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/components/theme/ThemeProvider";
+import { getAllThemes } from "@/themes";
+import { useState, useEffect } from "react";
 
 export function ThemeSelector() {
-  const { palette, mode, setPalette, toggleMode } = useTheme()
-  const themes = getAllThemes()
-  const [isHydrated, setIsHydrated] = useState(false)
+  const { palette, mode, setPalette, toggleMode } = useTheme();
+  const themes = getAllThemes();
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    setIsHydrated(true)
-  }, [])
+    setIsHydrated(true);
+  }, []);
 
   const getModeIcon = () => {
     switch (mode) {
-      case 'light':
-        return <Sun className="h-4 w-4" />
-      case 'dark':
-        return <Moon className="h-4 w-4" />
-      case 'system':
-        return <Monitor className="h-4 w-4" />
+      case "light":
+        return <Sun className="h-4 w-4" />;
+      case "dark":
+        return <Moon className="h-4 w-4" />;
+      case "system":
+        return <Monitor className="h-4 w-4" />;
     }
-  }
+  };
 
   return (
     <div className="flex items-center gap-2">
       {/* Theme Selector */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-9 gap-2 hover:bg-primary/10 hover:text-primary">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 gap-2 hover:bg-primary/10 hover:text-primary"
+          >
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">
-              {isHydrated ? themes.find(t => t.id === palette)?.name : ''}
+              {isHydrated ? themes.find((t) => t.id === palette)?.name : ""}
             </span>
             <ChevronDown className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[480px] p-2">
-          <DropdownMenuLabel className="px-2 py-2 text-sm font-semibold">Choose Theme</DropdownMenuLabel>
+          <DropdownMenuLabel className="px-2 py-2 text-sm font-semibold">
+            Choose Theme
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <div className="grid grid-cols-2 gap-2 p-1">
             {themes.map((theme) => (
@@ -56,9 +62,10 @@ export function ThemeSelector() {
                 className={`
                   relative p-3 rounded-lg cursor-pointer transition-all duration-200
                   border-2
-                  ${palette === theme.id
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-transparent hover:border-primary/30 hover:bg-primary/5'
+                  ${
+                    palette === theme.id
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-transparent hover:border-primary/30 hover:bg-primary/5"
                   }
                 `}
               >
@@ -98,5 +105,5 @@ export function ThemeSelector() {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
+  );
 }

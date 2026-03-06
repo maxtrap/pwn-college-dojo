@@ -55,7 +55,7 @@ export function WorkspaceService({
   }, []);
 
   useEffect(() => {
-    const fullUrl = `${iframeSrc}`
+    const fullUrl = `${iframeSrc}`;
 
     // Check if iframe already has the correct URL - if so, don't reload
     if (iframeRef.current && iframeRef.current.src === fullUrl && isReady) {
@@ -169,7 +169,8 @@ export function WorkspaceService({
           // transform: isResizing ? "scale(0.98)" : "scale(1)",
           // opacity: isResizing ? 0.8 : 1,
           // filter: isResizing ? "blur(2px)" : "none",
-          transition: "transform 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms ease-out, filter 150ms ease-out",
+          transition:
+            "transform 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms ease-out, filter 150ms ease-out",
           willChange: "transform, opacity, filter",
           backfaceVisibility: "hidden",
           perspective: 1000,

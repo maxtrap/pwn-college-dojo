@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ModuleLoading() {
   return (
@@ -30,7 +30,10 @@ export default function ModuleLoading() {
             <Skeleton className="h-8 w-48 mb-6" />
             <div className="space-y-3">
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+                <div
+                  key={i}
+                  className="rounded-lg border bg-card text-card-foreground shadow-sm p-4"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-5 w-5" />
@@ -52,7 +55,10 @@ export default function ModuleLoading() {
             <Skeleton className="h-8 w-32 mb-6" />
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+                <div
+                  key={i}
+                  className="rounded-lg border bg-card text-card-foreground shadow-sm p-4"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full" />
@@ -74,5 +80,5 @@ export default function ModuleLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

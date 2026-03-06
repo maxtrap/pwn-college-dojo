@@ -33,7 +33,6 @@ export default async function ModulePage({ params }: ModulePageProps) {
   console.log("---------------------- RESOURCES --------------------");
   const data = await getDojoWithModule(dojoId, moduleId);
 
-
   if (!data) {
     notFound();
   }

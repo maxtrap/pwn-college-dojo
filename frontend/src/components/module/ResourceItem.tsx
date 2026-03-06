@@ -51,7 +51,6 @@ export function ResourceItem({
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none -mt-3 mb-6">
         <Markdown>{resource.content}</Markdown>
-
       </div>
     );
   }

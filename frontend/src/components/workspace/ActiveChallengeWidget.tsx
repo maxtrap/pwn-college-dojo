@@ -1,77 +1,78 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useWorkspaceChallenge } from '@/stores'
+import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useWorkspaceChallenge } from "@/stores";
 import {
   Terminal,
   X,
   Maximize2,
   ChevronRight,
-  AlertTriangle
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+  AlertTriangle,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface ActiveChallenge {
-  dojoId: string
-  moduleId: string
-  challengeId: string
-  challengeName: string
-  dojoName: string
-  moduleName: string
+  dojoId: string;
+  moduleId: string;
+  challengeId: string;
+  challengeName: string;
+  dojoName: string;
+  moduleName: string;
 }
 
 interface ActiveChallengeWidgetProps {
-  activeChallenge?: ActiveChallenge | null
-  onKillChallenge?: () => void
+  activeChallenge?: ActiveChallenge | null;
+  onKillChallenge?: () => void;
 }
 
 export function ActiveChallengeWidget({
   activeChallenge: propActiveChallenge,
-  onKillChallenge
+  onKillChallenge,
 }: ActiveChallengeWidgetProps) {
   // Use workspace store as primary source, prop as fallback
-  const { activeChallenge: storeActiveChallenge, setActiveChallenge } = useWorkspaceChallenge()
-  const activeChallenge = storeActiveChallenge || propActiveChallenge
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isKilling, setIsKilling] = useState(false)
+  const { activeChallenge: storeActiveChallenge, setActiveChallenge } =
+    useWorkspaceChallenge();
+  const activeChallenge = storeActiveChallenge || propActiveChallenge;
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isKilling, setIsKilling] = useState(false);
 
   // Don't show if no active challenge
   if (!activeChallenge) {
-    return null
+    return null;
   }
 
   // Don't show if we're on any workspace page
-  const isOnWorkspacePage = pathname.includes('/workspace/')
+  const isOnWorkspacePage = pathname.includes("/workspace/");
 
   if (isOnWorkspacePage) {
-    return null
+    return null;
   }
 
   const handleGoToChallenge = () => {
     // Navigate to workspace URL (no scroll to preserve position)
-    const challengePath = `/dojo/${activeChallenge.dojoId}/module/${activeChallenge.moduleId}/workspace/challenge/${activeChallenge.challengeId}`
-    router.push(challengePath, { scroll: false })
-  }
+    const challengePath = `/dojo/${activeChallenge.dojoId}/module/${activeChallenge.moduleId}/workspace/challenge/${activeChallenge.challengeId}`;
+    router.push(challengePath, { scroll: false });
+  };
 
   const handleKillChallenge = async () => {
-    if (!onKillChallenge) return
+    if (!onKillChallenge) return;
 
-    setIsKilling(true)
+    setIsKilling(true);
     try {
-      await onKillChallenge()
+      await onKillChallenge();
     } catch (error) {
-      console.error('Failed to kill challenge:', error)
+      console.error("Failed to kill challenge:", error);
     } finally {
-      setIsKilling(false)
+      setIsKilling(false);
     }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -83,14 +84,16 @@ export function ActiveChallengeWidget({
           type: "spring",
           stiffness: 400,
           damping: 25,
-          mass: 0.8
+          mass: 0.8,
         }}
         className="fixed bottom-6 right-6 z-50"
       >
-        <Card className={cn(
-          "bg-background/95 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-200",
-          "max-w-sm"
-        )}>
+        <Card
+          className={cn(
+            "bg-background/95 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-200",
+            "max-w-sm",
+          )}
+        >
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               {/* Status indicator */}
@@ -147,5 +150,5 @@ export function ActiveChallengeWidget({
         </Card>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }

@@ -140,7 +140,9 @@ export function DojoWorkspaceLayout({
         : undefined;
 
   // Get the stored active challenge (this is the source of truth for UI)
-  const storedActiveChallenge = useWorkspaceStore(state => state.activeChallenge);
+  const storedActiveChallenge = useWorkspaceStore(
+    (state) => state.activeChallenge,
+  );
 
   // Set appropriate tab when resource changes
   useEffect(() => {
@@ -149,7 +151,13 @@ export function DojoWorkspaceLayout({
       const hasSlides = resource.type === "lecture" && resource.slides;
       const isMarkdown = resource.type === "markdown";
 
-      const appropriateTab = hasVideo ? "video" : hasSlides ? "slides" : isMarkdown ? "reading" : "video";
+      const appropriateTab = hasVideo
+        ? "video"
+        : hasSlides
+          ? "slides"
+          : isMarkdown
+            ? "reading"
+            : "video";
       setActiveResourceTab(appropriateTab);
     }
   }, [resource?.id, setActiveResourceTab]);
@@ -180,8 +188,11 @@ export function DojoWorkspaceLayout({
   // Set active challenge in workspace store for widget (only if URL changed)
   useEffect(() => {
     // Only update if URL-based challenge is different from stored
-    if (activeChallenge && (!storedActiveChallenge ||
-        storedActiveChallenge.challengeId !== activeChallenge.challengeId)) {
+    if (
+      activeChallenge &&
+      (!storedActiveChallenge ||
+        storedActiveChallenge.challengeId !== activeChallenge.challengeId)
+    ) {
       setActiveChallenge({
         dojoId: activeChallenge.dojoId,
         moduleId: activeChallenge.moduleId,
@@ -192,7 +203,13 @@ export function DojoWorkspaceLayout({
         isStarting: false, // URL navigation means it's not a new start
       });
     }
-  }, [activeChallenge, dojo.name, currentModule?.name, setActiveChallenge, storedActiveChallenge]);
+  }, [
+    activeChallenge,
+    dojo.name,
+    currentModule?.name,
+    setActiveChallenge,
+    storedActiveChallenge,
+  ]);
 
   // Handler function for challenge start
   const handleChallengeStart = async (
@@ -200,7 +217,9 @@ export function DojoWorkspaceLayout({
     challengeId: string,
   ) => {
     // Find the challenge details
-    const targetChallenge = currentModule?.challenges?.find(c => c.id === challengeId);
+    const targetChallenge = currentModule?.challenges?.find(
+      (c) => c.id === challengeId,
+    );
     if (!targetChallenge) return;
 
     // 1. Immediately update active challenge in store with isStarting flag
@@ -403,7 +422,9 @@ export function DojoWorkspaceLayout({
                 <AnimatedWorkspaceHeader
                   dojoName={dojo.name}
                   moduleName={currentModule?.name || "Module"}
-                  workspaceActive={workspaceData?.active || storedActiveChallenge?.isStarting}
+                  workspaceActive={
+                    workspaceData?.active || storedActiveChallenge?.isStarting
+                  }
                   activeResource={resource}
                   onClose={onChallengeClose}
                   onResourceClose={() => {
@@ -423,7 +444,7 @@ export function DojoWorkspaceLayout({
                   onResourceSelect={onResourceSelect}
                   isPending={startChallengeMutation.isPending}
                 />
-              )
+              ),
             }}
           </FullscreenHoverHandles>
         )}
@@ -469,9 +490,9 @@ export function DojoWorkspaceLayout({
                 requestAnimationFrame(() => {
                   setIsResizing(false);
                 });
-                document.removeEventListener('mouseup', handleMouseUp);
+                document.removeEventListener("mouseup", handleMouseUp);
               };
-              document.addEventListener('mouseup', handleMouseUp);
+              document.addEventListener("mouseup", handleMouseUp);
             }}
             className={isFullScreen ? "hidden" : ""}
           />
@@ -492,7 +513,9 @@ export function DojoWorkspaceLayout({
                 <AnimatedWorkspaceHeader
                   dojoName={dojo.name}
                   moduleName={currentModule?.name || "Module"}
-                  workspaceActive={workspaceData?.active || storedActiveChallenge?.isStarting}
+                  workspaceActive={
+                    workspaceData?.active || storedActiveChallenge?.isStarting
+                  }
                   activeResource={resource}
                   onClose={onChallengeClose}
                   onResourceClose={() => {

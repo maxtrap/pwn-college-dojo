@@ -1,43 +1,46 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { authService } from '@/services/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent } from '@/components/ui/card'
-import { Logo } from '@/components/ui/Logo'
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
+import { useState } from "react";
+import Link from "next/link";
+import { authService } from "@/services/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { Logo } from "@/components/ui/Logo";
+import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
 
 export function ForgotPasswordForm() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await authService.forgotPassword(email)
+      const response = await authService.forgotPassword(email);
 
       if (response.success) {
-        setSuccess(true)
+        setSuccess(true);
       } else {
         // Handle both errors array and message
-        const errorMessage = response.errors?.join(', ') || response.message || 'Failed to send reset email'
-        setError(errorMessage)
+        const errorMessage =
+          response.errors?.join(", ") ||
+          response.message ||
+          "Failed to send reset email";
+        setError(errorMessage);
       }
     } catch (err: any) {
-      setError(err.message || 'Network error')
+      setError(err.message || "Network error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (success) {
     return (
@@ -60,9 +63,11 @@ export function ForgotPasswordForm() {
               </div>
 
               <div className="space-y-2">
-                <h1 className="text-xl font-semibold text-foreground">Check your email</h1>
+                <h1 className="text-xl font-semibold text-foreground">
+                  Check your email
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                  We've sent a password reset link to{' '}
+                  We've sent a password reset link to{" "}
                   <span className="font-medium text-foreground">{email}</span>
                 </p>
               </div>
@@ -77,9 +82,7 @@ export function ForgotPasswordForm() {
                 </Button>
 
                 <Link href="/login">
-                  <Button className="w-full">
-                    Back to sign in
-                  </Button>
+                  <Button className="w-full">Back to sign in</Button>
                 </Link>
               </div>
 
@@ -104,7 +107,7 @@ export function ForgotPasswordForm() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -116,7 +119,9 @@ export function ForgotPasswordForm() {
             <Logo textClassName="text-3xl" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-foreground">Forgot your password?</h1>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Forgot your password?
+            </h1>
             <p className="text-sm text-muted-foreground">
               No worries! Enter your email and we'll send you a reset link.
             </p>
@@ -165,7 +170,7 @@ export function ForgotPasswordForm() {
                     <span>Sending reset link...</span>
                   </div>
                 ) : (
-                  'Send reset link'
+                  "Send reset link"
                 )}
               </Button>
 
@@ -185,8 +190,9 @@ export function ForgotPasswordForm() {
         {/* Security Note */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-            For security reasons, we'll send the reset link to the email associated with your account.
-            If you don't have access to that email, please contact support.
+            For security reasons, we'll send the reset link to the email
+            associated with your account. If you don't have access to that
+            email, please contact support.
           </p>
         </div>
 
@@ -202,5 +208,5 @@ export function ForgotPasswordForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

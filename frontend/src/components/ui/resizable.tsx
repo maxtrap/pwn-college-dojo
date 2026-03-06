@@ -1,8 +1,12 @@
-import { GripVertical } from "lucide-react"
-import * as ResizablePrimitive from "react-resizable-panels"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { GripVertical } from "lucide-react";
+import * as ResizablePrimitive from "react-resizable-panels";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const ResizablePanelGroup = ({
   className,
@@ -11,13 +15,13 @@ const ResizablePanelGroup = ({
   <ResizablePrimitive.PanelGroup
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
-      className
+      className,
     )}
     {...props}
   />
-)
+);
 
-const ResizablePanel = ResizablePrimitive.Panel
+const ResizablePanel = ResizablePrimitive.Panel;
 
 const ResizableHandle = ({
   withHandle,
@@ -26,9 +30,9 @@ const ResizableHandle = ({
   onMouseDown,
   ...props
 }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
-  withHandle?: boolean
-  onDoubleClick?: () => void
-  onMouseDown?: (e: React.MouseEvent) => void
+  withHandle?: boolean;
+  onDoubleClick?: () => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
 }) => (
   <Tooltip delayDuration={0}>
     <TooltipTrigger asChild>
@@ -38,7 +42,7 @@ const ResizableHandle = ({
           // Enhanced hover effects
           "hover:bg-primary/20 hover:after:bg-primary/30 transition-colors duration-200",
           "group cursor-col-resize",
-          className
+          className,
         )}
         onDoubleClick={onDoubleClick}
         onMouseDown={onMouseDown}
@@ -61,10 +65,12 @@ const ResizableHandle = ({
           <GripVertical className="h-3 w-3 opacity-60" />
           <span className="text-xs font-medium">Resize</span>
         </div>
-        <span className="text-[10px] text-muted-foreground">Double-click to toggle</span>
+        <span className="text-[10px] text-muted-foreground">
+          Double-click to toggle
+        </span>
       </div>
     </TooltipContent>
   </Tooltip>
-)
+);
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle };

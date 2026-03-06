@@ -1,55 +1,66 @@
-import { useState } from 'react'
-import { authService, type LoginCredentials } from '@/services/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useState } from "react";
+import { authService, type LoginCredentials } from "@/services/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface LoginFormProps {
-  onSuccess?: () => void
-  onRegisterClick?: () => void
-  onForgotPasswordClick?: () => void
+  onSuccess?: () => void;
+  onRegisterClick?: () => void;
+  onForgotPasswordClick?: () => void;
 }
 
-export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }: LoginFormProps) {
+export function LoginForm({
+  onSuccess,
+  onRegisterClick,
+  onForgotPasswordClick,
+}: LoginFormProps) {
   const [formData, setFormData] = useState<LoginCredentials>({
-    name: '',
-    password: '',
-    remember_me: false
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+    name: "",
+    password: "",
+    remember_me: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await authService.login(formData)
+      const response = await authService.login(formData);
 
       if (response.success) {
-        onSuccess?.()
+        onSuccess?.();
       } else {
-        setError(response.errors?.join(', ') || 'Login failed')
+        setError(response.errors?.join(", ") || "Login failed");
       }
     } catch (err: any) {
-      setError(err.message || 'Network error')
+      setError(err.message || "Network error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleInputChange = (field: keyof LoginCredentials) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    }))
-  }
+  const handleInputChange =
+    (field: keyof LoginCredentials) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]:
+          e.target.type === "checkbox" ? e.target.checked : e.target.value,
+      }));
+    };
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -73,7 +84,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
               id="name"
               type="text"
               value={formData.name}
-              onChange={handleInputChange('name')}
+              onChange={handleInputChange("name")}
               placeholder="Enter your username or email"
               required
               disabled={loading}
@@ -86,7 +97,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
               id="password"
               type="password"
               value={formData.password}
-              onChange={handleInputChange('password')}
+              onChange={handleInputChange("password")}
               placeholder="Enter your password"
               required
               disabled={loading}
@@ -98,7 +109,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
               id="remember_me"
               checked={formData.remember_me}
               onCheckedChange={(checked: boolean) =>
-                setFormData(prev => ({ ...prev, remember_me: !!checked }))
+                setFormData((prev) => ({ ...prev, remember_me: !!checked }))
               }
               disabled={loading}
             />
@@ -108,7 +119,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
 
           <div className="text-center space-y-2">
@@ -125,7 +136,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
 
             {onRegisterClick && (
               <div className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don't have an account?{" "}
                 <button
                   type="button"
                   onClick={onRegisterClick}
@@ -140,5 +151,5 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

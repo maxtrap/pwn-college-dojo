@@ -5,12 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Markdown } from "@/components/ui/markdown";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  BookOpen,
-  FileText,
-  Play,
-  Presentation,
-} from "lucide-react";
+import { BookOpen, FileText, Play, Presentation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAnimations } from "@/stores";
@@ -30,7 +25,9 @@ export function ResourceViewer({
   className,
 }: ResourceViewerProps) {
   const animations = useAnimations();
-  const [internalActiveTab, setInternalActiveTab] = useState<"video" | "slides" | "reading">("video");
+  const [internalActiveTab, setInternalActiveTab] = useState<
+    "video" | "slides" | "reading"
+  >("video");
 
   // Ignore header type resources - only render markdown and lecture
   if (resource.type === "header") {
@@ -46,7 +43,13 @@ export function ResourceViewer({
 
   // Auto-select the appropriate tab based on available content
   useEffect(() => {
-    const newTab = hasVideo ? "video" : hasSlides ? "slides" : isMarkdown ? "reading" : "video";
+    const newTab = hasVideo
+      ? "video"
+      : hasSlides
+        ? "slides"
+        : isMarkdown
+          ? "reading"
+          : "video";
     if (!externalActiveTab) {
       setInternalActiveTab(newTab);
     }
@@ -69,7 +72,7 @@ export function ResourceViewer({
             >
               <iframe
                 src={`https://www.youtube.com/embed/${resource.video}?rel=0&modestbranding`}
-                 frameBorder={0}
+                frameBorder={0}
                 className="w-full h-full"
                 title={resource.name}
                 allowFullScreen

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { ErrorPage } from '@/components/ui/error-page'
+import { useEffect } from "react";
+import { ErrorPage } from "@/components/ui/error-page";
 
 export default function Error({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Application error:', error)
-  }, [error])
+    console.error("Application error:", error);
+  }, [error]);
 
   return (
     <ErrorPage
@@ -23,5 +23,5 @@ export default function Error({
       showBack={true}
       showHome={true}
     />
-  )
+  );
 }

@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./src/**/*.{js,ts,jsx,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -17,7 +14,7 @@ export default {
     extend: {},
   },
   plugins: [
-    require('tailwind-scrollbar')({ nocompatible: true }),
-    require('@tailwindcss/line-clamp'),
+    require("tailwind-scrollbar")({ nocompatible: true }),
+    require("@tailwindcss/line-clamp"),
   ],
-}
+};

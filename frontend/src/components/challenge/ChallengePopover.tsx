@@ -1,24 +1,24 @@
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Play, X } from 'lucide-react'
-import { Markdown } from '@/components/ui/markdown'
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Play, X } from "lucide-react";
+import { Markdown } from "@/components/ui/markdown";
 
 interface Challenge {
-  id: string
-  name: string
-  required?: boolean
-  description?: string
-  solved?: boolean
-  difficulty?: string
-  points?: number
+  id: string;
+  name: string;
+  required?: boolean;
+  description?: string;
+  solved?: boolean;
+  difficulty?: string;
+  points?: number;
 }
 
 interface ChallengePopoverContentProps {
-  challenge: Challenge
-  isActive: boolean
-  onStartChallenge: () => void
-  isPending: boolean
-  onClose?: () => void
+  challenge: Challenge;
+  isActive: boolean;
+  onStartChallenge: () => void;
+  isPending: boolean;
+  onClose?: () => void;
 }
 
 export function ChallengePopoverContent({
@@ -26,10 +26,10 @@ export function ChallengePopoverContent({
   isActive,
   onStartChallenge,
   isPending,
-  onClose
+  onClose,
 }: ChallengePopoverContentProps) {
   return (
-    <div className="flex flex-col" style={{ maxHeight: '70vh' }}>
+    <div className="flex flex-col" style={{ maxHeight: "70vh" }}>
       <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-start justify-between">
           <h4 className="font-semibold">{challenge.name}</h4>
@@ -71,8 +71,8 @@ export function ChallengePopoverContent({
       <div
         className="flex-1 overflow-y-auto max-h-96 p-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent hover:scrollbar-thumb-border/80"
         style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'hsl(var(--border)) transparent'
+          scrollbarWidth: "thin",
+          scrollbarColor: "hsl(var(--border)) transparent",
         }}
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
@@ -102,5 +102,5 @@ export function ChallengePopoverContent({
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { ErrorPage } from '@/components/ui/error-page'
+import { ErrorPage } from "@/components/ui/error-page";
 
 export default function NotFound() {
   return (
@@ -10,5 +10,5 @@ export default function NotFound() {
       showBack={false}
       showHome={false}
     />
-  )
+  );
 }

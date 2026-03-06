@@ -1,54 +1,54 @@
-'use client'
+"use client";
 
-import { DojoNinja } from '@/components/ui/dojo-ninja'
-import { motion } from 'framer-motion'
-import { useMemo } from 'react'
-import { DojoGrid, NoDojosState } from './dojo-grid'
+import { DojoNinja } from "@/components/ui/dojo-ninja";
+import { motion } from "framer-motion";
+import { useMemo } from "react";
+import { DojoGrid, NoDojosState } from "./dojo-grid";
 
 export interface Dojo {
-  id: string
-  name: string
-  description?: string
-  type: string
-  official: boolean
+  id: string;
+  name: string;
+  description?: string;
+  type: string;
+  official: boolean;
   award?: {
-    belt?: string
-    emoji?: string
-  }
-  modules: number
-  challenges: number
-  active_hackers: number
+    belt?: string;
+    emoji?: string;
+  };
+  modules: number;
+  challenges: number;
+  active_hackers: number;
 }
 
 interface HomePageClientProps {
-  dojos: Dojo[]
+  dojos: Dojo[];
 }
 
 // Belt order for sorting
 const BELT_ORDER = [
-  'white',
-  'orange',
-  'yellow',
-  'green',
-  'purple',
-  'blue',
-  'brown',
-  'red',
-  'black',
-]
+  "white",
+  "orange",
+  "yellow",
+  "green",
+  "purple",
+  "blue",
+  "brown",
+  "red",
+  "black",
+];
 
 export interface SectionInfo {
-  title: string
-  subtitle: string
-  description: React.ReactNode
-  footer?: React.ReactNode
+  title: string;
+  subtitle: string;
+  description: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 // Section layout of the front page of pwn.college
 const DOJO_SECTIONS = {
   welcome: {
-    title: 'Getting Started',
-    subtitle: 'Learn the Basics!',
+    title: "Getting Started",
+    subtitle: "Learn the Basics!",
     description: (
       <>
         These first few dojos are designed to help you Get Started with the
@@ -60,13 +60,13 @@ const DOJO_SECTIONS = {
     ),
   },
   topic: {
-    title: 'Core Material',
-    subtitle: 'Earn Your Belts!',
+    title: "Core Material",
+    subtitle: "Earn Your Belts!",
     description: (
       <>
         These dojos form the official pwn.college curriculum, taking you on a
         curated journey through the art of hacking. As you progress and build
-        your skills, like in a martial art, you will earn{' '}
+        your skills, like in a martial art, you will earn{" "}
         <a href="belts">belts</a> for completing dojo after dojo. We won't stop
         you from jumping around if you want (and have the requisite skills), but
         you must earn belts sequentially.
@@ -74,8 +74,8 @@ const DOJO_SECTIONS = {
     ),
     footer: (
       <>
-        After completing the dojos above, not only will you be added to the{' '}
-        <a href="belts">belts</a> page, but{' '}
+        After completing the dojos above, not only will you be added to the{" "}
+        <a href="belts">belts</a> page, but{" "}
         <i>we will send you actual pwn.college-embroidered belts</i>! To get
         your belt, <a href="mailto:pwn@pwn.college">send us an email</a> from
         the email address associated with your pwn.college account. We’ll then
@@ -87,8 +87,8 @@ const DOJO_SECTIONS = {
     ),
   },
   public: {
-    title: 'Community Material',
-    subtitle: 'Earn Badges!',
+    title: "Community Material",
+    subtitle: "Earn Badges!",
     description: (
       <>
         No matter how much material we create, there is always more to learn!
@@ -100,8 +100,8 @@ const DOJO_SECTIONS = {
     ),
   },
   course: {
-    title: 'The Courses',
-    subtitle: 'Earning Credit',
+    title: "The Courses",
+    subtitle: "Earning Credit",
     description: (
       <>
         We leverage the above material to run a number of courses on this
@@ -112,7 +112,7 @@ const DOJO_SECTIONS = {
   },
   member: {
     title: "Dojos You've Joined",
-    subtitle: 'Keep Hacking!',
+    subtitle: "Keep Hacking!",
     description: (
       <>
         These are the private dojos that have been shared with you. Keep
@@ -124,8 +124,8 @@ const DOJO_SECTIONS = {
     ),
   },
   admin: {
-    title: 'Your Dojos',
-    subtitle: 'Challenge the World!',
+    title: "Your Dojos",
+    subtitle: "Challenge the World!",
     description: (
       <>
         You can create your own dojo, either hosting your own challenges or
@@ -145,7 +145,7 @@ const DOJO_SECTIONS = {
       </>
     ),
   },
-} satisfies Record<string, SectionInfo>
+} satisfies Record<string, SectionInfo>;
 
 // Group all dojos by their `type` property
 // The result will be an object where each key is a dojo type
@@ -153,22 +153,22 @@ const DOJO_SECTIONS = {
 const groupDojosByType = (dojos: Dojo[]) =>
   dojos.reduce<Record<string, Dojo[]>>((acc, dojo) => {
     if (!acc[dojo.type]) {
-      acc[dojo.type] = []
+      acc[dojo.type] = [];
     }
-    acc[dojo.type].push(dojo)
-    return acc
-  }, {})
+    acc[dojo.type].push(dojo);
+    return acc;
+  }, {});
 
 export function HomePageClient({ dojos }: HomePageClientProps) {
   // Memoize computed values to prevent infinite re-renders
   const { sectionedDojos } = useMemo<{
-    sectionedDojos: Record<string, Dojo[]>
+    sectionedDojos: Record<string, Dojo[]>;
   }>(
     () => ({
       sectionedDojos: groupDojosByType(dojos),
     }),
     [dojos],
-  )
+  );
 
   return (
     <motion.div
@@ -199,7 +199,7 @@ export function HomePageClient({ dojos }: HomePageClientProps) {
                   designed to be tackled in order.
                 </p>
                 <div className="text-sm sm:text-base text-muted-foreground">
-                  {dojos.length} {dojos.length === 1 ? 'dojo' : 'dojos'}{' '}
+                  {dojos.length} {dojos.length === 1 ? "dojo" : "dojos"}{" "}
                   available
                 </div>
               </div>
@@ -226,7 +226,7 @@ export function HomePageClient({ dojos }: HomePageClientProps) {
                   transition={{
                     duration: 6,
                     repeat: Infinity,
-                    ease: 'easeInOut',
+                    ease: "easeInOut",
                   }}
                 >
                   <DojoNinja
@@ -255,5 +255,5 @@ export function HomePageClient({ dojos }: HomePageClientProps) {
         </div>
       </motion.div>
     </motion.div>
-  )
+  );
 }
